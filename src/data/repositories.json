@@ -1,0 +1,10 @@
+[
+  { "name": "Java Microservice Cluster",  "commits": 210, "lang": "Java",   "type": "API Core" },
+  { "name": "Python AI Engine",           "commits": 158, "lang": "Python", "type": "ML Module" },
+  { "name": "DotNet Integration Bus",     "commits": 92,  "lang": "C#",     "type": "Gateway" },
+  { "name": "Spring Boot Auth Service",   "commits": 174, "lang": "Java",   "type": "API Core" },
+  { "name": "FastAPI Stream Router",      "commits": 121, "lang": "Python", "type": "ML Module" },
+  { "name": "Kafka Event Mesh",           "commits": 86,  "lang": "Java",   "type": "Gateway" },
+  { "name": "AsyncIO Crawler Swarm",      "commits": 64,  "lang": "Python", "type": "ML Module" },
+  { "name": "ASP.NET Identity Forge",     "commits": 73,  "lang": "C#",     "type": "API Core" }
+]

@@ -1,0 +1,5 @@
+[
+  { "name": "Java",   "enrichment": 65 },
+  { "name": "Python", "enrichment": 25 },
+  { "name": "C#",     "enrichment": 55 }
+]
