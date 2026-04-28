@@ -87,18 +87,19 @@ const Footer = styled.footer`
   border-top: 1px dashed rgba(180, 80, 255, 0.2);
 `;
 
-const GridLayout = styled.div`
+const GridLayout = styled.main`
   display: grid;
   grid-template-areas:
     'tl center tr'
     'bl center br';
-  grid-template-columns: 1fr minmax(360px, 1.05fr) 1fr;
-  grid-template-rows: minmax(340px, 1fr) minmax(340px, 1fr);
+  grid-template-columns: 1fr minmax(320px, 1fr) 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
   width: 100%;
   max-width: 1480px;
   margin: 0 auto;
   position: relative;
+  min-height: 720px; /* whole dashboard fits 1 viewport on tall screens, scrolls on short */
 
   & > .center {
     grid-area: center;
@@ -106,15 +107,17 @@ const GridLayout = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 0;
   }
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1180px) {
     grid-template-areas:
       'tl tr'
       'center center'
       'bl br';
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 360px auto;
+    grid-template-rows: minmax(320px, auto) minmax(320px, auto) minmax(320px, auto);
+    min-height: 0;
 
     & > .center { min-height: 360px; }
   }
@@ -149,14 +152,6 @@ function AppInner() {
       <HeaderBar />
       <Shell>
         <GridLayout>
-          {/* connector lattice between center core and corners */}
-          <ConnectorSvg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-            <line x1="50" y1="50" x2="0"   y2="0"   stroke="rgba(180, 80, 255, 0.35)" strokeWidth="0.18" strokeDasharray="0.6 0.8" />
-            <line x1="50" y1="50" x2="100" y2="0"   stroke="rgba(180, 80, 255, 0.35)" strokeWidth="0.18" strokeDasharray="0.6 0.8" />
-            <line x1="50" y1="50" x2="0"   y2="100" stroke="rgba(180, 80, 255, 0.35)" strokeWidth="0.18" strokeDasharray="0.6 0.8" />
-            <line x1="50" y1="50" x2="100" y2="100" stroke="rgba(180, 80, 255, 0.35)" strokeWidth="0.18" strokeDasharray="0.6 0.8" />
-          </ConnectorSvg>
-
           <TopLeft><PolyglotFuelReactor /></TopLeft>
           <TopRight><ProjectReactionGraph onSelect={onSelect} /></TopRight>
           <div className="center"><MultilingualCore /></div>

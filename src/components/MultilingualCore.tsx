@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { WireframeGlobe } from './WireframeGlobe';
+import { IcosphereCore } from './IcosphereCore';
 
 const Wrap = styled.div`
   position: relative;
@@ -10,13 +10,13 @@ const Wrap = styled.div`
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  pointer-events: none;
 `;
 
 const Stage = styled.div`
   position: relative;
   width: clamp(260px, 30vw, 380px);
   aspect-ratio: 1;
+  pointer-events: auto;
 `;
 
 const TextBlock = styled.div`
@@ -81,7 +81,7 @@ export function MultilingualCore() {
   return (
     <Wrap aria-label="multilingual core">
       <Stage>
-        <WireframeGlobe />
+        <IcosphereCore />
       </Stage>
 
       <TextBlock>

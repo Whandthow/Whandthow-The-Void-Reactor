@@ -4,14 +4,46 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Whandthow // Fission Synthesizer — backend polyglot engineer portfolio" />
+    <meta name="theme-color" content="#0d0020" />
+    <meta
+      name="description"
+      content="Whandthow // Fission Synthesizer — interactive backend polyglot engineer portfolio. Java, Python, .NET reactor dashboard."
+    />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Whandthow // Fission Synthesizer" />
+    <meta
+      property="og:description"
+      content="Interactive backend polyglot engineer portfolio rendered as a multilingual fission reactor."
+    />
+    <meta property="og:image" content="/favicon.svg" />
+
     <title>Whandthow.com // Fission Synthesizer</title>
+
+    <!-- Preconnect early so the DNS / TLS handshake is overlapped with HTML parsing -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!--
+      Async (non-render-blocking) font loading.
+      Trick: load as `media="print"`, then on `onload` swap back to `all`.
+      Browsers don't block first paint on print stylesheets.
+      `<noscript>` fallback for users without JS.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Orbitron:wght@500;700;900&display=swap"
       rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Orbitron:wght@500;700;900&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Orbitron:wght@500;700;900&display=swap"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
