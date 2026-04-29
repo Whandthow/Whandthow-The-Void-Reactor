@@ -10,8 +10,6 @@ const fastPulse = keyframes`
   0%, 100% { opacity: .55; }
   50%      { opacity: 1;   }
 `;
-/* Note: durations were ~half of these. Slowed down to halve repaint frequency —
-   visually you only notice difference if you stare at it. */
 
 const Frame = styled.div<{ $active: boolean }>`
   position: relative;
@@ -138,7 +136,6 @@ interface Props {
   enrichment: number;
 }
 
-// Build a vertical sinusoidal path
 function buildSnakePath(width: number, height: number, amp: number, freq: number) {
   const cx = width / 2;
   const steps = 60;

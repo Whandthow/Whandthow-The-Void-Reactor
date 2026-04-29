@@ -107,7 +107,7 @@ const CloseBtn = styled.button`
     padding: 8px 10px;
     font-size: 9px;
     letter-spacing: 0.16em;
-    min-height: 36px; /* touch target */
+    min-height: 36px; 
   }
 `;
 
@@ -238,7 +238,6 @@ export function ProjectGitGraphModal({ repo, onClose }: Props) {
     fetchGitGraph(repo.name).then(setGraph);
   }, [repo.name]);
 
-  // close on ESC
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -271,12 +270,10 @@ export function ProjectGitGraphModal({ repo, onClose }: Props) {
         <Body>
           <GraphWrap>
             <Svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMinYMin meet" style={{ height: H }}>
-              {/* lane labels */}
               <text className="lane" x={PAD_X + 0 * STEP_X} y={14} textAnchor="middle">FEAT</text>
               <text className="lane" x={PAD_X + 1 * STEP_X} y={14} textAnchor="middle">MAIN</text>
               <text className="lane" x={PAD_X + 2 * STEP_X} y={14} textAnchor="middle">REL</text>
 
-              {/* edges */}
               {graph.map((n) => {
                 if (!n.parent) return null;
                 const p = idMap.get(n.parent);
@@ -290,7 +287,6 @@ export function ProjectGitGraphModal({ repo, onClose }: Props) {
                 return <path key={n.id} className={`edge ${n.branch}`} d={d} />;
               })}
 
-              {/* nodes + labels */}
               {graph.map((n) => {
                 const cx = PAD_X + n.x * STEP_X;
                 const cy = PAD_Y + n.y * STEP_Y;

@@ -20,7 +20,7 @@ const ContactGrid = styled.ul`
   padding: 0;
   display: grid;
   grid-template-columns: 1fr;
-  /* Equal-height rows that together fill the available panel height. */
+  
   grid-auto-rows: 1fr;
   gap: 10px;
   flex: 1;
@@ -35,9 +35,9 @@ const ContactLink = styled.a`
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  width: 100%; /* button intrinsic width was shrinking the email tile */
+  width: 100%; 
   height: 100%;
-  min-height: 56px; /* touch target */
+  min-height: 56px; 
   border: 1px solid rgba(180, 80, 255, 0.4);
   background:
     linear-gradient(135deg, rgba(40, 10, 80, 0.55), rgba(20, 0, 40, 0.85));
@@ -174,9 +174,7 @@ interface ChannelLink {
   glyph: string;
   label: string;
   caption: string;
-  /** External URL — if set the tile is rendered as <a target="_blank">. */
   href?: string;
-  /** If set the tile copies this value to the clipboard on click. */
   copy?: string;
 }
 
@@ -189,7 +187,6 @@ const CHANNELS: ChannelLink[] = [
 ];
 
 export function ContactEmergencyPanel() {
-  // Toast for copy confirmation — transient (1.8s) overlay swap of the carrier line.
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -203,7 +200,6 @@ export function ContactEmergencyPanel() {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(value);
       } else {
-        // fallback for non-secure contexts (rare on production)
         const ta = document.createElement('textarea');
         ta.value = value;
         ta.style.position = 'fixed';
@@ -215,7 +211,6 @@ export function ContactEmergencyPanel() {
       }
       setCopied(true);
     } catch {
-      // even on failure show feedback so the user can try selecting manually
       setCopied(true);
     }
   };

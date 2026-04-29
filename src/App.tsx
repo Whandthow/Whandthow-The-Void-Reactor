@@ -5,25 +5,36 @@ import { BrowserChrome } from './components/BrowserChrome';
 import { HeaderBar } from './components/HeaderBar';
 import { MultilingualCore } from './components/MultilingualCore';
 import { PolyglotFuelReactor } from './components/PolyglotFuelReactor';
-import { ProjectReactionGraph } from './components/ProjectReactionGraph';
-import { ActivityMonitorTerminal } from './components/ActivityMonitorTerminal';
 import { ContactEmergencyPanel } from './components/ContactEmergencyPanel';
 import { CursorDistortion } from './components/CursorDistortion';
 import { ResonanceProvider, useResonance } from './context/ResonanceContext';
 import type { Repository } from './types';
 
-/* Code-split: the git-graph modal is only needed when the user opens a repo,
-   so we don't ship it in the initial bundle. */
 const ProjectGitGraphModal = lazy(() =>
   import('./components/ProjectGitGraphModal').then((m) => ({ default: m.ProjectGitGraphModal })),
 );
+
+const ProjectReactionGraph = lazy(() =>
+  import('./components/ProjectReactionGraph').then((m) => ({ default: m.ProjectReactionGraph })),
+);
+
+const ActivityMonitorTerminal = lazy(() =>
+  import('./components/ActivityMonitorTerminal').then((m) => ({ default: m.ActivityMonitorTerminal })),
+);
+
+const PanelSkeleton = styled.div`
+  width: 100%;
+  min-height: 320px;
+  border: 1px dashed rgba(180, 80, 255, 0.2);
+  background: rgba(20, 0, 40, 0.4);
+`;
 
 const Shell = styled.div`
   position: relative;
   z-index: 1;
   min-height: 100vh;
   width: 100%;
-  padding: 84px 24px 28px; /* below browser chrome (32) + header (36) + gap */
+  padding: 84px 24px 28px; 
   display: flex;
   flex-direction: column;
 
@@ -31,7 +42,7 @@ const Shell = styled.div`
     padding: 80px 16px 22px;
   }
   @media (max-width: 720px) {
-    /* mobile chrome shrinks to 28+32 = 60, plus 12px gap */
+    
     padding: 72px 10px 18px;
   }
 `;
@@ -82,7 +93,7 @@ const GridLayout = styled.main`
   max-width: 1480px;
   margin: 0 auto;
   position: relative;
-  min-height: 720px; /* whole dashboard fits 1 viewport on tall screens, scrolls on short */
+  min-height: 720px; 
 
   & > .center {
     grid-area: center;
@@ -93,7 +104,7 @@ const GridLayout = styled.main`
     min-height: 0;
   }
 
-  /* Tablet: 2 columns, center spans full width */
+  
   @media (max-width: 1180px) {
     grid-template-areas:
       'tl tr'
@@ -107,12 +118,7 @@ const GridLayout = styled.main`
     & > .center { min-height: 320px; }
   }
 
-  /* Phone: single column, hero core first, then panels in narrative order:
-     1. core (identity)
-     2. tl   (skills / fuel rods)
-     3. tr   (projects graph)
-     4. bl   (activity monitor)
-     5. br   (contact channels) */
+  
   @media (max-width: 720px) {
     grid-template-areas:
       'center'
@@ -149,9 +155,17 @@ function AppInner() {
       <Shell>
         <GridLayout>
           <TopLeft><PolyglotFuelReactor /></TopLeft>
-          <TopRight><ProjectReactionGraph onSelect={onSelect} /></TopRight>
+          <TopRight>
+            <Suspense fallback={<PanelSkeleton />}>
+              <ProjectReactionGraph onSelect={onSelect} />
+            </Suspense>
+          </TopRight>
           <div className="center"><MultilingualCore /></div>
-          <BottomLeft><ActivityMonitorTerminal /></BottomLeft>
+          <BottomLeft>
+            <Suspense fallback={<PanelSkeleton />}>
+              <ActivityMonitorTerminal />
+            </Suspense>
+          </BottomLeft>
           <BottomRight><ContactEmergencyPanel /></BottomRight>
         </GridLayout>
 

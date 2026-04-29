@@ -91,7 +91,7 @@ const WaveBox = styled.div`
   overflow: hidden;
   min-height: 110px;
   cursor: crosshair;
-  touch-action: pan-y; /* let vertical page scroll continue while we read horizontal touch for scrub */
+  touch-action: pan-y; 
 
   @media (max-width: 720px) {
     min-height: 90px;
@@ -128,8 +128,7 @@ const WaveSweep = styled.div`
   inset: 0;
   background: linear-gradient(90deg, transparent, rgba(180, 80, 255, 0.14), transparent);
   width: 30%;
-  /* Slowed from 6s to 9s. mix-blend-mode removed \u2014 it forced an off-screen
-     compositor layer that was repainted every frame. */
+  
   animation: ${sweep} 9s linear infinite;
   pointer-events: none;
 `;
@@ -336,7 +335,6 @@ export function ActivityMonitorTerminal(_p: Props) {
     fetchContributionWaveform(180).then(setWave);
   }, []);
 
-  // log generator
   useEffect(() => {
     const id = window.setInterval(() => {
       setLogs((prev) => {
@@ -352,14 +350,11 @@ export function ActivityMonitorTerminal(_p: Props) {
         const aged = prev.map((l) => ({ ...l, age: l.age + 1 }));
         return [entry, ...aged].slice(0, 7);
       });
-      // bump oscilloscope amplitude inline; previously this went through a
-      // global context tick that re-rendered every other component.
       ampRef.current = 26;
-    }, 2600); // was 1700ms — slower cadence, fewer React renders per minute
+    }, 2600); 
     return () => window.clearInterval(id);
   }, []);
 
-  // oscilloscope animation — throttled to ~30fps, 60-point path
   useEffect(() => {
     let raf = 0;
     let t = 0;
@@ -367,14 +362,14 @@ export function ActivityMonitorTerminal(_p: Props) {
     let paused = document.hidden;
     const onVis = () => { paused = document.hidden; };
     document.addEventListener('visibilitychange', onVis);
-    const FRAME_MS = 1000 / 30; // 30fps is more than enough for a wavy line
-    const STEPS = 60; // was 120 — halved, visually identical at this width
+    const FRAME_MS = 1000 / 30; 
+    const STEPS = 60; 
     const update = (now: number) => {
       raf = requestAnimationFrame(update);
       if (paused) return;
       if (now - lastFrame < FRAME_MS) return;
       lastFrame = now;
-      t += 0.12; // double phase step to compensate for half framerate
+      t += 0.12; 
       ampRef.current = ampRef.current * 0.94 + 8 * 0.06;
       const a = ampRef.current;
       const oW = 600;
@@ -394,7 +389,6 @@ export function ActivityMonitorTerminal(_p: Props) {
     };
   }, []);
 
-  // build waveform path + peaks + per-day x/y/v
   const wavePath = useMemo(() => {
     const empty = {
       d: '',
@@ -427,7 +421,6 @@ export function ActivityMonitorTerminal(_p: Props) {
     return { d, area, peaks, points, max };
   }, [wave]);
 
-  // counts per category for filter pill badges
   const counts = useMemo(() => {
     const c: Record<Filter, number> = { ALL: logs.length, JVM: 0, PY: 0, NET: 0, INFRA: 0 };
     for (const l of logs) c[l.cat]++;
@@ -439,7 +432,6 @@ export function ActivityMonitorTerminal(_p: Props) {
     [logs, filter]
   );
 
-  // unified scrub handler — pointer events cover mouse + touch + pen
   const scrubAt = (clientX: number) => {
     if (!wave.length || !waveBoxRef.current) return;
     const rect = waveBoxRef.current.getBoundingClientRect();
@@ -448,7 +440,6 @@ export function ActivityMonitorTerminal(_p: Props) {
     setHoverIdx(idx);
   };
   const onWavePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    // for touch: only scrub when finger is actually pressed; for mouse: hover (no buttons) is fine too
     if (e.pointerType !== 'mouse' && e.buttons === 0) return;
     scrubAt(e.clientX);
   };
@@ -457,7 +448,6 @@ export function ActivityMonitorTerminal(_p: Props) {
   };
   const onWaveLeave = () => setHoverIdx(null);
 
-  // user-triggered oscilloscope spike
   const pingOsc = () => {
     ampRef.current = 38;
   };

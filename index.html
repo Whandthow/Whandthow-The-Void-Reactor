@@ -44,9 +44,77 @@
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Orbitron:wght@500;700;900&display=swap"
       />
     </noscript>
+
+    <style>
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: rgb(0, 0, 3);
+        color: rgba(220, 200, 255, 0.9);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+      #root { min-height: 100vh; }
+      .boot-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background:
+          radial-gradient(circle at 50% 50%, rgba(80, 20, 160, 0.22) 0%, rgba(20, 0, 40, 0) 35%, rgb(0,0,3) 70%),
+          rgb(0, 0, 3);
+        z-index: 0;
+      }
+      .boot-splash .brand {
+        font-weight: 800;
+        font-size: 26px;
+        letter-spacing: 0.34em;
+        color: rgb(220, 170, 255);
+        text-shadow: 0 0 12px rgba(180, 80, 255, 0.7);
+      }
+      .boot-splash .sub {
+        font-size: 10px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: rgba(180, 80, 255, 0.75);
+      }
+      .boot-splash .bar {
+        margin-top: 6px;
+        width: 180px;
+        height: 2px;
+        background: rgba(180, 80, 255, 0.18);
+        position: relative;
+        overflow: hidden;
+      }
+      .boot-splash .bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -40%;
+        width: 40%;
+        background: rgb(180, 80, 255);
+        box-shadow: 0 0 8px rgba(180, 80, 255, 0.7);
+        animation: boot-bar 1.2s linear infinite;
+      }
+      @keyframes boot-bar {
+        to { left: 100%; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-splash .bar::after { animation: none; left: 30%; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot-splash" aria-hidden="true">
+        <div class="brand">WHANDTHOW</div>
+        <div class="sub">VOID REACTOR // BOOTING</div>
+        <div class="bar"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

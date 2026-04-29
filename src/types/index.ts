@@ -10,18 +10,18 @@ export interface UserStats {
 
 export interface LanguageEnrichment {
   name: LangKey;
-  enrichment: number; // percentage 0-100
+  enrichment: number; 
 }
 
 export interface Repository {
   name: string;
   commits: number;
   lang: LangKey;
-  type: string; // 'API Core' | 'ML Module' | 'Gateway' | ...
+  type: string; 
 }
 
 export interface DailyCommit {
-  date: string; // ISO YYYY-MM-DD
+  date: string; 
   count: number;
 }
 

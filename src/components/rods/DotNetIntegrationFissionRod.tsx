@@ -159,9 +159,7 @@ export function DotNetIntegrationFissionRod({ enrichment }: Props) {
       <Column>
         <StackBox>
           <Crystal viewBox="0 0 60 116" preserveAspectRatio="none">
-            {/* main crystal: vertical hex */}
             <polygon className="core" points="30,12 52,32 52,84 30,104 8,84 8,32" />
-            {/* internal facets */}
             <polygon className="facet" points="30,12 30,104 52,84 52,32" />
             <polygon className="facet" points="30,12 30,104 8,84 8,32" />
             <line className="facet" x1="8" y1="32" x2="52" y2="84" />

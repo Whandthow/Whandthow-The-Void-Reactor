@@ -6,7 +6,7 @@ const Layer = styled.div`
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  /* hint to the compositor that children move on the GPU */
+  
   contain: layout paint style;
 `;
 
@@ -37,10 +37,6 @@ const Dot = styled.div`
   will-change: transform;
 `;
 
-/* The distortion halo previously used backdrop-filter (blur + hue-rotate +
-   saturate). That forces the browser to re-rasterize everything beneath the
-   100×100 disc on every pointermove — ~the single most expensive CSS feature.
-   Replaced with a pure radial gradient: visually the same warm halo, free. */
 const DistortionField = styled.div`
   position: absolute;
   top: 0;
@@ -76,19 +72,6 @@ const TrailDot = styled.div`
 
 const TRAIL = 5;
 
-/**
- * Custom cursor + spacetime distortion field.
- *
- * The Dot, Reticle and DistortionField are pinned to the real pointer
- * position with **zero lag** — they are written synchronously inside the
- * `pointermove` handler (no RAF, no lerp). This is what fixes the visible
- * desync the user reported.
- *
- * The 8-dot decay trail is the only thing that intentionally lags; it runs
- * in a separate RAF loop and lerps toward the pointer for the smooth tail
- * effect.
- */
-/** Detect coarse pointers (touch screens) so we can skip the custom cursor entirely. */
 function isCoarsePointer(): boolean {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
   return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
@@ -102,23 +85,19 @@ export function CursorDistortion() {
   const fieldRef = useRef<HTMLDivElement>(null);
   const trailRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // pointer position (mutable, no React state for perf)
   const target = useRef({ x: -100, y: -100 });
-  // trail positions
   const trail = useRef<{ x: number; y: number }[]>(
     Array.from({ length: TRAIL }, () => ({ x: -100, y: -100 }))
   );
 
   useEffect(() => {
     if (!enabled) return;
-    // ---- main cursor: instant follow on every pointermove ----
     const onMove = (e: PointerEvent) => {
       const x = e.clientX;
       const y = e.clientY;
       target.current.x = x;
       target.current.y = y;
 
-      // synchronous transform writes — no frame of latency
       if (dotRef.current) {
         dotRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
       }
@@ -136,18 +115,13 @@ export function CursorDistortion() {
 
   useEffect(() => {
     if (!enabled) return;
-    // ---- trail: RAF loop, lerps behind the pointer ----
-    // Stops itself once the trail has caught up to the cursor and nothing has
-    // moved for a while — prevents burning ~5 DOM transform writes per frame
-    // forever while the user is reading.
     let raf = 0;
     let idleFrames = 0;
-    const SLEEP_AFTER = 30; // ~0.5s at 60fps
+    const SLEEP_AFTER = 30; 
     const loop = () => {
       const tx = target.current.x;
       const ty = target.current.y;
 
-      // shift trail by one
       for (let i = trail.current.length - 1; i > 0; i--) {
         trail.current[i].x = trail.current[i - 1].x;
         trail.current[i].y = trail.current[i - 1].y;

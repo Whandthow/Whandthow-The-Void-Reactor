@@ -10,10 +10,6 @@ interface ResonanceState {
 
 const ResonanceContext = createContext<ResonanceState | null>(null);
 
-/* Note: `logPulseTick` used to live here but it was only ever read/written by
-   ActivityMonitorTerminal. Keeping it in the global context made *every*
-   subscriber (3 fuel rods, ProjectReactionGraph, App) re-render every 2.6s
-   for no reason. It's now local state inside ActivityMonitorTerminal. */
 export function ResonanceProvider({ children }: { children: React.ReactNode }) {
   const [activeLang, setActiveLang] = useState<LangKey | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);

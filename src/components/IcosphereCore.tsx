@@ -31,7 +31,6 @@ const FACES: [number, number, number][] = [
   [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1],
 ];
 
-// 12 base vertices each represent a backend service node
 const NODE_LABELS = [
   'JVM CORE',
   'PYTHON KERNEL',
@@ -96,7 +95,6 @@ function buildIcosphere(subdivisions: number) {
   return { verts, edges };
 }
 
-/* GPU-composited only: transform + opacity (no filter, no box-shadow) */
 const corePulse = keyframes`
   0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.92; }
   50%      { transform: translate(-50%, -50%) scale(1.07); opacity: 1; }
@@ -141,8 +139,7 @@ const SphereSvg = styled.svg`
   inset: 0;
   width: 100%;
   height: 100%;
-  /* drop-shadow on every line was forcing a per-frame filter pass over hundreds
-     of segments — removed. The vertices still glow which is enough visually. */
+  
   & line {
     stroke: rgb(180, 80, 255);
     stroke-width: 0.55;
@@ -244,17 +241,6 @@ interface Props {
   subdivisions?: number;
 }
 
-/**
- * Geodesic icosphere core.
- *
- * - 12 base vertices labelled as backend "service nodes" (JVM, Python, Postgres…)
- * - subdivisions=1 → 42 verts, ~60 edges; back faces dimmed by depth.
- *   (Was 2 → ~480 edges — 8× more DOM mutations per frame, dropped for perf.)
- * - drag to rotate (pointer events), auto-rotates when idle.
- * - hover near a named vertex highlights it + shows tooltip badge.
- * - click anywhere ⇒ ping ring around the central core.
- * - SVG attributes are mutated imperatively in a throttled RAF loop.
- */
 export function IcosphereCore({ subdivisions = 1 }: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<(SVGLineElement | null)[]>([]);
@@ -266,9 +252,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
   const lastInteract = useRef(0);
   const drag = useRef({ active: false, x: 0, y: 0, moved: 0 });
   const pointerXY = useRef({ x: -1, y: -1, inside: false });
-  /* Separate hover gate: when > -1 the auto-rotate branch is skipped this
-     frame. Decoupled from `lastInteract` so the moment the cursor leaves a
-     vertex, rotation resumes immediately (no 1.4s cooldown). */
   const hoverRef = useRef(-1);
 
   const [size, setSize] = useState(360);
@@ -277,7 +260,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
 
   const data = useMemo(() => buildIcosphere(subdivisions), [subdivisions]);
 
-  // resize observer
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -289,29 +271,37 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  // animation loop
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
     let lastFrame = 0;
-    let paused = document.hidden;
-    /* Throttle to ~40fps. Visually indistinguishable from 60 for a slow
-       drag-to-rotate icosphere, but cuts work by ~33%. */
+    let pausedByVisibility = document.hidden;
+    let pausedByViewport = false;
     const FRAME_MS = 1000 / 40;
+
+    const stage = stageRef.current;
+    const io = stage
+      ? new IntersectionObserver(
+          ([entry]) => {
+            pausedByViewport = !entry.isIntersecting;
+            if (!pausedByViewport && !pausedByVisibility) last = performance.now();
+          },
+          { threshold: 0.05 }
+        )
+      : null;
+    if (io && stage) io.observe(stage);
+
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
-      if (paused) return;
+      if (pausedByVisibility || pausedByViewport) return;
       if (now - lastFrame < FRAME_MS) return;
       lastFrame = now;
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
 
-      // ease toward target
       rot.current.x += (target.current.x - rot.current.x) * 0.12;
       rot.current.y += (target.current.y - rot.current.y) * 0.12;
 
-      // resume auto-rotate after a short cooldown post drag/click. Hovering
-      // a vertex pauses via hoverRef instead, so un-hover is instantaneous.
       if (hoverRef.current < 0 && now - lastInteract.current > 600) {
         target.current.y += dt * 0.18;
       }
@@ -324,7 +314,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
       const c = size / 2;
 
       const projected = projectedRef.current;
-      // ensure length
       if (projected.length !== data.verts.length) {
         projected.length = data.verts.length;
         for (let i = 0; i < data.verts.length; i++) projected[i] = { x: 0, y: 0, z: 0 };
@@ -332,7 +321,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
 
       for (let i = 0; i < data.verts.length; i++) {
         const v = data.verts[i];
-        // rotateY then rotateX
         const x1 = v.x * cy + v.z * sy;
         const z1 = -v.x * sy + v.z * cy;
         const y2 = v.y * cx - z1 * sx;
@@ -342,7 +330,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
         projected[i].z = z2;
       }
 
-      // edges
       for (let i = 0; i < data.edges.length; i++) {
         const ln = lineRefs.current[i];
         if (!ln) continue;
@@ -352,13 +339,11 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
         ln.setAttribute('y1', a.y.toFixed(1));
         ln.setAttribute('x2', b.x.toFixed(1));
         ln.setAttribute('y2', b.y.toFixed(1));
-        // back-face fade based on average z (front = positive z toward viewer)
         const avgZ = (a.z + b.z) * 0.5;
-        const op = (avgZ + 1) * 0.5; // 0..1
+        const op = (avgZ + 1) * 0.5; 
         ln.setAttribute('stroke-opacity', (0.12 + op * 0.7).toFixed(2));
       }
 
-      // verts (only the 12 named ones get circles for perf)
       for (let i = 0; i < 12; i++) {
         const d = dotRefs.current[i];
         if (!d) continue;
@@ -370,7 +355,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
         d.setAttribute('r', p.z > 0 ? '3.2' : '2.2');
       }
 
-      // hover detection: nearest of 12 named vertices to pointer (front-facing only)
       if (pointerXY.current.inside) {
         let bestIdx = -1;
         let bestD2 = 14 * 14;
@@ -388,9 +372,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
           }
         }
         if (bestIdx >= 0) {
-          // Pause auto-rotation via the hover gate (NOT lastInteract). target.y
-          // stays frozen, rot lerps smoothly to a halt, and as soon as the
-          // cursor leaves the vertex auto-rotate fires the very next frame.
           hoverRef.current = bestIdx;
           const p = projected[bestIdx];
           setHover((prev) =>
@@ -398,7 +379,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
               ? prev
               : { idx: bestIdx, x: p.x, y: p.y }
           );
-          // mark active dot
           for (let i = 0; i < 12; i++) {
             const d = dotRefs.current[i];
             if (!d) continue;
@@ -417,20 +397,19 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
 
     };
     const onVisibility = () => {
-      paused = document.hidden;
-      if (!paused) last = performance.now();
+      pausedByVisibility = document.hidden;
+      if (!pausedByVisibility && !pausedByViewport) last = performance.now();
     };
     document.addEventListener('visibilitychange', onVisibility);
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener('visibilitychange', onVisibility);
+      io?.disconnect();
     };
-    // hover state intentionally omitted from deps (RAF reads through closure)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, size]);
 
-  // pointer handlers
   const onPointerDown = (e: React.PointerEvent) => {
     drag.current = { active: true, x: e.clientX, y: e.clientY, moved: 0 };
     lastInteract.current = performance.now();
@@ -456,9 +435,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
     const wasDrag = drag.current.moved > 4;
     drag.current.active = false;
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    // After drag with pointer capture, native pointerleave may not fire.
-    // Verify pointer is still inside; clear hover otherwise so the badge
-    // doesn't stay stuck on a vertex the cursor is no longer near.
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -468,16 +444,12 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
       x >= 0 && y >= 0 && x <= rect.width && y <= rect.height;
     pointerXY.current.inside = stillInside;
     if (!stillInside) clearHover();
-    // click (no drag) → emit a ping
     if (!wasDrag) {
       const id = Date.now() + Math.random();
       setPings((arr) => [...arr, id]);
       window.setTimeout(() => setPings((arr) => arr.filter((x) => x !== id)), 820);
     }
   };
-  /* Clear hover state synchronously so the tooltip cannot survive past the
-     cursor leaving — previously this was deferred to the throttled RAF tick,
-     which left a ghost badge on screen if the loop happened to be paused. */
   const clearHover = () => {
     hoverRef.current = -1;
     setHover(null);
@@ -493,7 +465,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
     clearHover();
   };
 
-  // outer hex frame geometry (from -50..50 viewBox)
   const FRAME_R = 52;
   const hexPts = Array.from({ length: 6 }, (_, i) => {
     const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
@@ -512,24 +483,20 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
       role="img"
       aria-label="interactive backend reactor core"
     >
-      {/* outer hex frame + decorative crosses (static) */}
       <FrameSvg viewBox="-60 -60 120 120">
         <circle className="ring" cx="0" cy="0" r="56" />
         <polygon className="ring" points={hexPolyPts} />
-        {/* internal star-of-david style cross-lines through opposite vertices */}
         {[0, 1, 2].map((i) => {
           const p1 = hexPts[i];
           const p2 = hexPts[i + 3];
           return <line key={i} className="cross" x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} />;
         })}
-        {/* a faint rotated inner hex */}
         <polygon
           className="ring"
           points={hexPolyPts}
           transform="rotate(30) scale(0.78)"
           opacity="0.55"
         />
-        {/* corner vertex markers + labels */}
         {hexPts.map((p, i) => (
           <g key={i}>
             <circle className="vertex" cx={p.x} cy={p.y} r="1.6" />
@@ -545,7 +512,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
         ))}
       </FrameSvg>
 
-      {/* the wireframe icosphere */}
       <SphereSvg viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
         <g>
           {data.edges.map((_, i) => (
@@ -558,7 +524,6 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
           ))}
         </g>
         <g>
-          {/* only 12 named base vertices get visible dots */}
           {Array.from({ length: 12 }).map((_, i) => (
             <circle
               key={i}
@@ -571,13 +536,11 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
         </g>
       </SphereSvg>
 
-      {/* central core sphere + click-pings */}
       <Core />
       {pings.map((id) => (
         <PingRing key={id} />
       ))}
 
-      {/* hover badge */}
       {hover && (
         <NodeBadge $x={hover.x} $y={hover.y}>
           {NODE_LABELS[hover.idx]}

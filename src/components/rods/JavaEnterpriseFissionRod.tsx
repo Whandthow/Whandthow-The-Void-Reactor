@@ -125,7 +125,6 @@ export function JavaEnterpriseFissionRod({ enrichment }: Props) {
   const { activeLang, setActiveLang } = useResonance();
   const active = activeLang === 'Java';
 
-  // count segments based on enrichment
   const segmentsCount = Math.max(4, Math.round(enrichment / 6));
   const segments = Array.from({ length: segmentsCount }, (_, i) => i);
 

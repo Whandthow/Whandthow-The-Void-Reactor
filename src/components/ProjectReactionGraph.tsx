@@ -47,10 +47,6 @@ const linkBase = css`
   stroke-linecap: round;
 `;
 
-/* Animation is opt-in: by default the path is static. Only when the user is
-   hovering the rod for this language does the dash-flow animate. This solves
-   Lighthouse's "Avoid non-composited animations" warning in the idle state
-   (was 8 always-animating paths — a per-frame paint cost). */
 const Link = styled.path<{ $lang: LangKey; $dim: boolean; $flow: boolean }>`
   ${linkBase};
   stroke: ${(p) => theme.langColors[p.$lang]};
@@ -87,7 +83,7 @@ const NodeGroup = styled.g<{ $dim: boolean; $selected: boolean }>`
     fill: rgba(20, 0, 40, 0.85);
     stroke: rgb(180, 80, 255);
     stroke-width: ${(p) => (p.$selected ? 2.4 : 1.4)};
-    /* glow only when actually selected/hovered — still paid for transitions */
+    
     filter: ${(p) => (p.$selected ? 'drop-shadow(0 0 8px rgba(180, 80, 255, 0.85))' : 'none')};
   }
   & .lang-mark {
@@ -145,7 +141,7 @@ const Legend = styled.div`
     letter-spacing: 0.16em;
 
     & > span:last-child {
-      margin-left: 0 !important; /* drop the auto-margin so it wraps cleanly */
+      margin-left: 0 !important; 
       flex-basis: 100%;
       color: rgba(180, 80, 255, 0.7);
     }
@@ -188,7 +184,6 @@ export function ProjectReactionGraph({ onSelect }: Props) {
   const W = 580;
   const H = 360;
 
-  // place nodes deterministically
   const nodes: NodePos[] = useMemo(() => {
     if (!repos.length) return [];
     const positions: { x: number; y: number }[] = [
@@ -208,7 +203,6 @@ export function ProjectReactionGraph({ onSelect }: Props) {
     }));
   }, [repos]);
 
-  // connectors ride along certain edges
   const connectors: ConnectorPos[] = useMemo(() => {
     if (nodes.length < 6) return [];
     return [
@@ -218,7 +212,6 @@ export function ProjectReactionGraph({ onSelect }: Props) {
     ];
   }, [nodes]);
 
-  // edges: language-grouped chains plus a few cross links
   const edges = useMemo(() => {
     const out: { from: NodePos; to: NodePos; lang: LangKey }[] = [];
     const byLang: Record<LangKey, NodePos[]> = { Java: [], Python: [], 'C#': [] };
@@ -227,7 +220,6 @@ export function ProjectReactionGraph({ onSelect }: Props) {
       const arr = byLang[L];
       for (let i = 0; i < arr.length - 1; i++) out.push({ from: arr[i], to: arr[i + 1], lang: L });
     });
-    // a couple of cross connections
     if (byLang.Java[0] && byLang.Python[0]) out.push({ from: byLang.Java[0], to: byLang.Python[0], lang: 'Python' });
     if (byLang.Python[0] && byLang['C#'][0]) out.push({ from: byLang.Python[0], to: byLang['C#'][0], lang: 'C#' });
     return out;
@@ -254,9 +246,7 @@ export function ProjectReactionGraph({ onSelect }: Props) {
               </radialGradient>
             </defs>
 
-            {/* edges */}
             {edges.map((e, i) => {
-              // gentle quadratic curve
               const mx = (e.from.x + e.to.x) / 2;
               const my = (e.from.y + e.to.y) / 2 - 24;
               const d = `M ${e.from.x} ${e.from.y} Q ${mx} ${my} ${e.to.x} ${e.to.y}`;
@@ -271,7 +261,6 @@ export function ProjectReactionGraph({ onSelect }: Props) {
               );
             })}
 
-            {/* connector chips on edges */}
             {connectors.map((c, i) => (
               <InlineIcon key={i} transform={`translate(${c.x - 30}, ${c.y - 9})`}>
                 <polygon className="ic-shape" points="6,0 54,0 60,9 54,18 6,18 0,9" />
@@ -279,7 +268,6 @@ export function ProjectReactionGraph({ onSelect }: Props) {
               </InlineIcon>
             ))}
 
-            {/* nodes */}
             {nodes.map((n) => {
               const dim = isDim(n.repo.lang);
               const selected = selectedRepo?.name === n.repo.name;

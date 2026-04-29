@@ -37,7 +37,7 @@ export const GlobalStyles = createGlobalStyle`
     text-rendering: optimizeLegibility;
   }
 
-  /* Touch / coarse-pointer devices: no fake cursor, restore native */
+  
   @media (hover: none) and (pointer: coarse) {
     body { cursor: auto; }
   }
@@ -52,7 +52,7 @@ export const GlobalStyles = createGlobalStyle`
     color: var(--color-bg-void);
   }
 
-  /* Hide scrollbar but allow scroll */
+  
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: rgba(20, 0, 40, 0.4); }
   ::-webkit-scrollbar-thumb {
@@ -60,9 +60,7 @@ export const GlobalStyles = createGlobalStyle`
     border-radius: 3px;
   }
 
-  /* Respect OS-level "reduce motion" preference: kill every animation /
-     transition / smooth scroll. Massive perf win on slow machines whose users
-     have already opted out of motion. */
+  
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;

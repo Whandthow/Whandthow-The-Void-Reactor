@@ -11,8 +11,7 @@ const Bar = styled.div`
   align-items: center;
   gap: 12px;
   padding: 0 14px;
-  /* Was rgba(0.95) + backdrop-filter blur(8px). Since the background is
-     already nearly opaque, the blur was wasted GPU work \u2014 dropped. */
+  
   background: linear-gradient(180deg, rgb(20, 0, 40), rgb(8, 0, 20));
   border-bottom: 1px solid rgba(180, 80, 255, 0.35);
   font-family: var(--font-mono);
@@ -74,7 +73,7 @@ const Side = styled.div`
   color: rgba(180, 80, 255, 0.7);
 
   @media (max-width: 720px) {
-    display: none; /* save space, info already shown in HeaderBar */
+    display: none; 
   }
 `;
 

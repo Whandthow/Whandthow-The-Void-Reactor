@@ -19,7 +19,7 @@ const Stage = styled.div`
   pointer-events: auto;
 
   @media (max-width: 720px) {
-    /* on phones, scale to viewport but cap so the icosphere never dominates */
+    
     width: min(72vw, 280px);
   }
 `;
@@ -92,8 +92,6 @@ const StabValue = styled.span`
   text-shadow: 0 0 8px rgba(180, 80, 255, 0.7);
 `;
 
-/* Isolated so its 1s tick doesn't re-render the parent (and through it the
-   heavy IcosphereCore wireframe). Only this small numeric span re-renders. */
 function StabilityTicker() {
   const [stability, setStability] = useState(98.7);
   const tickRef = useRef(0);
@@ -104,18 +102,36 @@ function StabilityTicker() {
       const wave = Math.sin(tickRef.current / 6) * 0.6 + (Math.random() - 0.5) * 0.4;
       const next = 98.5 + wave;
       setStability(Number(next.toFixed(2)));
-    }, 1000); // was 420ms — 2.4× fewer renders, eye barely notices
+    }, 1000); 
     return () => clearInterval(id);
   }, []);
 
   return <StabValue>{stability.toFixed(2)}%</StabValue>;
 }
 
+function useLowPower(): boolean {
+  const [low, setLow] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia?.('(hover: none) and (pointer: coarse)').matches ||
+      window.innerWidth < 720
+    );
+  });
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 720px)');
+    const handler = () => setLow(mq.matches);
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+  return low;
+}
+
 export function MultilingualCore() {
+  const lowPower = useLowPower();
   return (
     <Wrap aria-label="multilingual core">
       <Stage>
-        <IcosphereCore />
+        <IcosphereCore subdivisions={lowPower ? 0 : 1} />
       </Stage>
 
       <TextBlock>

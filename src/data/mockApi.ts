@@ -10,7 +10,6 @@ import type {
   LangKey,
 } from '../types';
 
-// ---------- API stubs (drop-in replaceable with real GitHub REST API) ----------
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -29,12 +28,10 @@ export async function fetchRepositories(): Promise<Repository[]> {
   return repositories as Repository[];
 }
 
-// Pseudo-random but deterministic per-day commits for the past `days` days.
 export async function fetchContributionWaveform(days = 365): Promise<DailyCommit[]> {
   await sleep(80);
   const out: DailyCommit[] = [];
   const today = new Date();
-  // seedable LCG
   let s = 1337;
   const rand = () => {
     s = (s * 9301 + 49297) % 233280;
@@ -44,9 +41,8 @@ export async function fetchContributionWaveform(days = 365): Promise<DailyCommit
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const weekday = d.getDay();
-    // base + weekly cycle + occasional spike
     const base = 1 + Math.floor(rand() * 3);
-    const cycle = (Math.sin(i / 6) + 1) * 2; // 0..4
+    const cycle = (Math.sin(i / 6) + 1) * 2; 
     const weekendDip = weekday === 0 || weekday === 6 ? 0.4 : 1;
     const spike = rand() > 0.94 ? Math.floor(rand() * 12) + 6 : 0;
     const count = Math.max(0, Math.round((base + cycle) * weekendDip + spike));
@@ -55,11 +51,9 @@ export async function fetchContributionWaveform(days = 365): Promise<DailyCommit
   return out;
 }
 
-// ---------- Git graph generator for project modal ----------
 
 export async function fetchGitGraph(repo: string): Promise<GitGraphNode[]> {
   await sleep(90);
-  // deterministic per-repo
   let s = repo.split('').reduce((a, c) => a + c.charCodeAt(0), 0) || 7;
   const rand = () => {
     s = (s * 9301 + 49297) % 233280;
@@ -97,6 +91,5 @@ export async function fetchGitGraph(repo: string): Promise<GitGraphNode[]> {
   return nodes;
 }
 
-// ---------- Helpers ----------
 
 export const LANG_KEYS: LangKey[] = ['Java', 'Python', 'C#'];

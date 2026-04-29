@@ -1,16 +1,10 @@
 import styled from 'styled-components';
 
-/**
- * Reusable hexagonal/cut-corner panel used by every quadrant module.
- * Provides framed look + corner ticks + scanning line.
- */
 export const Panel = styled.section<{ $cut?: 'hex' | 'soft' | 'flag' }>`
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Slightly more opaque than before so we no longer need a backdrop blur.
-     backdrop-filter forces the browser to re-rasterise everything underneath
-     the panel — with 4 panels on screen that was a constant tax. */
+  
   background:
     linear-gradient(180deg, rgba(20, 0, 40, 0.78), rgba(8, 0, 20, 0.92));
   border: 1px solid rgba(100, 30, 200, 0.6);

@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
-/* Pulsating ring keyframes — the only animation kept in the background.
-   Using transform+opacity so it stays on the compositor thread. */
 const pulseRing = keyframes`
   0%, 100% { transform: scale(1);    opacity: 0.55; }
   50%      { transform: scale(1.06); opacity: 0.85; }
@@ -21,9 +19,6 @@ const Wrap = styled.div`
     rgb(0, 0, 3);
 `;
 
-/* Static grid — no animation, no blur filter. Mask fades it toward the edges.
-   Was previously animated with a 24s drift; that pushed the whole layer through
-   a CPU paint every frame. Static is visually almost identical and free. */
 const Distortion = styled.div`
   position: absolute;
   inset: -10%;
@@ -83,7 +78,6 @@ const WarpHaloSvg = styled.svg`
   pointer-events: none;
 `;
 
-/** Detect coarse pointer / small screen so we can further trim decoration. */
 function useIsLowPower(): boolean {
   const [low, setLow] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -101,15 +95,6 @@ function useIsLowPower(): boolean {
   return low;
 }
 
-/**
- * Background shader.
- *
- * NOTE: Previously rendered an animated SVG <feTurbulence>+<feDisplacementMap>
- * which forced the browser to recompute a full-screen procedural noise +
- * displacement every single frame — by far the heaviest GPU/CPU cost in the
- * whole page. That filter has been removed. The decorative “warp halo” is now
- * just a static radial gradient, which looks essentially identical and is free.
- */
 export function BackgroundShader() {
   const lowPower = useIsLowPower();
 
@@ -117,7 +102,6 @@ export function BackgroundShader() {
     <Wrap aria-hidden>
       <Stars />
       {!lowPower && <Distortion />}
-      {/* static radial halo — replaces the animated turbulence/displacement */}
       <WarpHaloSvg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
         <defs>
           <radialGradient id="warpGrad" cx="50%" cy="50%" r="50%">
@@ -134,7 +118,6 @@ export function BackgroundShader() {
           </>
         )}
       </WarpHaloSvg>
-      {/* a single pulsating ring is enough — was three concentric rings before */}
       <Ring $size={lowPower ? 520 : 620} $duration={9} $delay={0} />
       <Vignette />
     </Wrap>
