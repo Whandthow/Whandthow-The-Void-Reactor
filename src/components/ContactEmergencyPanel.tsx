@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Panel, PanelBody, PanelHeader, PanelTag, PanelTitle } from './Panel';
 
@@ -7,9 +8,10 @@ const carrierPulse = keyframes`
 `;
 
 const Body = styled(PanelBody)`
-  display: grid;
-  grid-template-rows: 1fr auto;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
+  justify-content: space-between;
 `;
 
 const ContactGrid = styled.ul`
@@ -17,17 +19,12 @@ const ContactGrid = styled.ul`
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr;
+  /* Equal-height rows that together fill the available panel height. */
+  grid-auto-rows: 1fr;
   gap: 10px;
   flex: 1;
   min-height: 0;
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    gap: 8px;
-  }
 `;
 
 const ContactTile = styled.li``;
@@ -37,7 +34,8 @@ const ContactLink = styled.a`
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 14px;
+  padding: 14px 18px;
+  width: 100%; /* button intrinsic width was shrinking the email tile */
   height: 100%;
   min-height: 56px; /* touch target */
   border: 1px solid rgba(180, 80, 255, 0.4);
@@ -173,21 +171,55 @@ const StatusDot = styled.span`
 `;
 
 interface ChannelLink {
-  href: string;
   glyph: string;
   label: string;
   caption: string;
-  external?: boolean;
+  /** External URL — if set the tile is rendered as <a target="_blank">. */
+  href?: string;
+  /** If set the tile copies this value to the clipboard on click. */
+  copy?: string;
 }
 
+const EMAIL = 'maandrij95@gmail.com';
+
 const CHANNELS: ChannelLink[] = [
-  { href: 'https://www.linkedin.com/in/whandthow', glyph: 'IN', label: 'LinkedIn', caption: 'Professional record', external: true },
-  { href: 'https://github.com/whandthow',          glyph: 'GH', label: 'GitHub',   caption: 'Source repositories', external: true },
-  { href: 'mailto:contact@whandthow.com',          glyph: '@',  label: 'Email',    caption: 'Direct uplink' },
-  { href: 'https://t.me/whandthow',                glyph: 'TG', label: 'Telegram', caption: 'Realtime channel', external: true },
+  { href: 'https://github.com/whandthow', glyph: 'GH', label: 'GitHub',   caption: 'Source repositories' },
+  { href: 'https://t.me/whandthow',       glyph: 'TG', label: 'Telegram', caption: 'Realtime channel' },
+  { copy: EMAIL,                          glyph: '@',  label: 'Email',    caption: 'Click to copy' },
 ];
 
 export function ContactEmergencyPanel() {
+  // Toast for copy confirmation — transient (1.8s) overlay swap of the carrier line.
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = window.setTimeout(() => setCopied(false), 1800);
+    return () => window.clearTimeout(id);
+  }, [copied]);
+
+  const handleCopy = async (value: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        // fallback for non-secure contexts (rare on production)
+        const ta = document.createElement('textarea');
+        ta.value = value;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+    } catch {
+      // even on failure show feedback so the user can try selecting manually
+      setCopied(true);
+    }
+  };
+
   return (
     <Panel $cut="hex" aria-label="engineer uplink secure channel">
       <PanelHeader>
@@ -199,25 +231,45 @@ export function ContactEmergencyPanel() {
       </PanelHeader>
       <Body>
         <ContactGrid>
-          {CHANNELS.map((c) => (
-            <ContactTile key={c.label}>
-              <ContactLink
-                href={c.href}
-                {...(c.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-              >
+          {CHANNELS.map((c) => {
+            const isCopy = !!c.copy;
+            const commonInner = (
+              <>
                 <Glyph aria-hidden>{c.glyph}</Glyph>
                 <Label>
                   <strong>{c.label}</strong>
                   <em>{c.caption}</em>
                 </Label>
-              </ContactLink>
-            </ContactTile>
-          ))}
+              </>
+            );
+            return (
+              <ContactTile key={c.label}>
+                {isCopy ? (
+                  <ContactLink
+                    as="button"
+                    type="button"
+                    onClick={() => handleCopy(c.copy!)}
+                    aria-label={`Copy ${c.label} address to clipboard`}
+                  >
+                    {commonInner}
+                  </ContactLink>
+                ) : (
+                  <ContactLink href={c.href} target="_blank" rel="noreferrer">
+                    {commonInner}
+                  </ContactLink>
+                )}
+              </ContactTile>
+            );
+          })}
         </ContactGrid>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <Carrier aria-hidden>
-            <span>▸ CARRIER WAVE // 432 Hz · ENCRYPTED · LATENCY 18ms</span>
+          <Carrier aria-hidden={!copied} role={copied ? 'status' : undefined} aria-live="polite">
+            <span>
+              {copied
+                ? `▸ EMAIL COPIED // ${EMAIL} · READY TO PASTE`
+                : '▸ CARRIER WAVE // 432 Hz · ENCRYPTED · LATENCY 18ms'}
+            </span>
           </Carrier>
           <Footer>
             <span>UPLINK READY // ROUTE: VOID</span>

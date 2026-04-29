@@ -119,7 +119,7 @@ export function MultilingualCore() {
       </Stage>
 
       <TextBlock>
-        <Name>ALEX WHANDTHOW // BACKEND POLIGLOT ENGINEER</Name>
+        <Name>WHANDTHOW // BACKEND POLIGLOT ENGINEER</Name>
         <Sub>Orchestrating high-stability multilingual cores</Sub>
         <StabilityRow>
           CORE_STABILITY:&nbsp;<StabilityTicker />
