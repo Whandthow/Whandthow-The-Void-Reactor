@@ -22,6 +22,12 @@ const ContactGrid = styled.ul`
   gap: 10px;
   flex: 1;
   min-height: 0;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 8px;
+  }
 `;
 
 const ContactTile = styled.li``;
@@ -33,6 +39,7 @@ const ContactLink = styled.a`
   gap: 12px;
   padding: 14px 14px;
   height: 100%;
+  min-height: 56px; /* touch target */
   border: 1px solid rgba(180, 80, 255, 0.4);
   background:
     linear-gradient(135deg, rgba(40, 10, 80, 0.55), rgba(20, 0, 40, 0.85));
@@ -44,6 +51,13 @@ const ContactLink = styled.a`
   text-transform: uppercase;
   transition: border-color .18s, box-shadow .18s, color .18s, transform .18s;
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+
+  @media (max-width: 720px) {
+    padding: 12px 12px;
+    gap: 10px;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+  }
 
   &::after {
     content: '↗';

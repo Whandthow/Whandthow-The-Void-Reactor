@@ -10,6 +10,8 @@ const fastPulse = keyframes`
   0%, 100% { opacity: .55; }
   50%      { opacity: 1;   }
 `;
+/* Note: durations were ~half of these. Slowed down to halve repaint frequency —
+   visually you only notice difference if you stare at it. */
 
 const Frame = styled.div<{ $active: boolean }>`
   position: relative;
@@ -50,6 +52,10 @@ const Column = styled.div`
   gap: 10px;
   align-items: stretch;
   margin-top: 4px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 50px 1fr;
+  }
 `;
 
 const StackBox = styled.div`
@@ -59,6 +65,11 @@ const StackBox = styled.div`
   border: 1px solid rgba(180, 80, 255, 0.4);
   background: rgba(0, 0, 3, 0.6);
   overflow: hidden;
+
+  @media (max-width: 720px) {
+    width: 50px;
+    height: 92px;
+  }
 `;
 
 const Snake = styled.svg`
@@ -73,7 +84,7 @@ const Snake = styled.svg`
     stroke-linecap: round;
     filter: drop-shadow(0 0 4px rgba(180, 80, 255, 0.8));
     stroke-dasharray: 6 8;
-    animation: ${flow} 1.6s linear infinite;
+    animation: ${flow} 3s linear infinite;
   }
   & path.ghost {
     stroke: rgba(180, 80, 255, 0.25);
@@ -83,7 +94,7 @@ const Snake = styled.svg`
   }
   & circle {
     fill: rgb(220, 170, 255);
-    animation: ${fastPulse} .8s ease-in-out infinite;
+    animation: ${fastPulse} 1.6s ease-in-out infinite;
   }
 `;
 
@@ -102,6 +113,10 @@ const Big = styled.div`
   font-size: 22px;
   color: rgb(180, 80, 255);
   text-shadow: 0 0 8px rgba(180, 80, 255, 0.8);
+
+  @media (max-width: 720px) {
+    font-size: 20px;
+  }
 `;
 
 const Bar = styled.div`
@@ -147,6 +162,16 @@ export function PythonSynthesisFissionRod({ enrichment }: Props) {
       $active={active}
       onMouseEnter={() => setActiveLang('Python')}
       onMouseLeave={() => setActiveLang(null)}
+      onClick={() => setActiveLang(active ? null : 'Python')}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setActiveLang(active ? null : 'Python');
+        }
+      }}
+      aria-pressed={active}
       aria-label="Python fuel rod"
     >
       <Tag>

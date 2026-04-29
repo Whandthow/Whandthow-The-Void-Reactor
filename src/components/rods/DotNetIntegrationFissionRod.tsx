@@ -46,6 +46,10 @@ const Column = styled.div`
   grid-template-columns: 60px 1fr;
   gap: 10px;
   margin-top: 4px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 50px 1fr;
+  }
 `;
 
 const StackBox = styled.div`
@@ -57,6 +61,11 @@ const StackBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @media (max-width: 720px) {
+    width: 50px;
+    height: 92px;
+  }
 `;
 
 const Crystal = styled.svg`
@@ -96,6 +105,10 @@ const Big = styled.div`
   font-size: 22px;
   color: rgb(180, 80, 255);
   text-shadow: 0 0 8px rgba(180, 80, 255, 0.8);
+
+  @media (max-width: 720px) {
+    font-size: 20px;
+  }
 `;
 
 const Bar = styled.div`
@@ -126,6 +139,16 @@ export function DotNetIntegrationFissionRod({ enrichment }: Props) {
       $active={active}
       onMouseEnter={() => setActiveLang('C#')}
       onMouseLeave={() => setActiveLang(null)}
+      onClick={() => setActiveLang(active ? null : 'C#')}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setActiveLang(active ? null : 'C#');
+        }
+      }}
+      aria-pressed={active}
       aria-label="C# fuel rod"
     >
       <Tag>

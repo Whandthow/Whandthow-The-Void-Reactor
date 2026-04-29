@@ -141,15 +141,16 @@ const SphereSvg = styled.svg`
   inset: 0;
   width: 100%;
   height: 100%;
+  /* drop-shadow on every line was forcing a per-frame filter pass over hundreds
+     of segments — removed. The vertices still glow which is enough visually. */
   & line {
     stroke: rgb(180, 80, 255);
-    stroke-width: 0.45;
+    stroke-width: 0.55;
     stroke-linecap: round;
-    filter: drop-shadow(0 0 4px rgba(180, 80, 255, 0.45));
   }
   & .vert {
     fill: rgb(220, 170, 255);
-    filter: drop-shadow(0 0 5px rgba(180, 80, 255, 0.95));
+    filter: drop-shadow(0 0 4px rgba(180, 80, 255, 0.85));
   }
   & .vert.named {
     stroke: rgba(255, 230, 255, 0.9);
@@ -157,7 +158,7 @@ const SphereSvg = styled.svg`
   }
   & .vert.hot {
     fill: rgb(255, 230, 255);
-    filter: drop-shadow(0 0 9px rgba(220, 170, 255, 1));
+    filter: drop-shadow(0 0 8px rgba(220, 170, 255, 1));
   }
 `;
 
@@ -176,8 +177,7 @@ const Core = styled.div`
     rgba(80, 20, 160, 0.5) 90%
   );
   box-shadow:
-    0 0 30px rgba(180, 80, 255, 0.85),
-    0 0 80px rgba(180, 80, 255, 0.4),
+    0 0 24px rgba(180, 80, 255, 0.85),
     inset 0 0 14px rgba(220, 170, 255, 0.6);
   animation: ${corePulse} 3.2s ease-in-out infinite;
   pointer-events: none;
@@ -248,13 +248,14 @@ interface Props {
  * Geodesic icosphere core.
  *
  * - 12 base vertices labelled as backend "service nodes" (JVM, Python, Postgres…)
- * - subdivisions=2 → 162 verts, ~480 edges; back faces dimmed by depth.
+ * - subdivisions=1 → 42 verts, ~60 edges; back faces dimmed by depth.
+ *   (Was 2 → ~480 edges — 8× more DOM mutations per frame, dropped for perf.)
  * - drag to rotate (pointer events), auto-rotates when idle.
  * - hover near a named vertex highlights it + shows tooltip badge.
  * - click anywhere ⇒ ping ring around the central core.
- * - SVG attributes are mutated imperatively in a RAF loop for 60fps.
+ * - SVG attributes are mutated imperatively in a throttled RAF loop.
  */
-export function IcosphereCore({ subdivisions = 2 }: Props) {
+export function IcosphereCore({ subdivisions = 1 }: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<(SVGLineElement | null)[]>([]);
   const dotRefs = useRef<(SVGCircleElement | null)[]>([]);
@@ -288,7 +289,14 @@ export function IcosphereCore({ subdivisions = 2 }: Props) {
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
+    let lastFrame = 0;
+    /* Throttle to ~40fps. Visually indistinguishable from 60 for a slow
+       drag-to-rotate icosphere, but cuts work by ~33%. */
+    const FRAME_MS = 1000 / 40;
     const tick = (now: number) => {
+      raf = requestAnimationFrame(tick);
+      if (now - lastFrame < FRAME_MS) return;
+      lastFrame = now;
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
 
@@ -392,7 +400,6 @@ export function IcosphereCore({ subdivisions = 2 }: Props) {
         for (let i = 0; i < 12; i++) dotRefs.current[i]?.classList.remove('hot');
       }
 
-      raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);

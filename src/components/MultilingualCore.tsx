@@ -17,6 +17,11 @@ const Stage = styled.div`
   width: clamp(260px, 30vw, 380px);
   aspect-ratio: 1;
   pointer-events: auto;
+
+  @media (max-width: 720px) {
+    /* on phones, scale to viewport but cap so the icosphere never dominates */
+    width: min(72vw, 280px);
+  }
 `;
 
 const TextBlock = styled.div`
@@ -24,6 +29,11 @@ const TextBlock = styled.div`
   margin-top: 22px;
   text-align: center;
   pointer-events: auto;
+  padding: 0 8px;
+
+  @media (max-width: 720px) {
+    margin-top: 14px;
+  }
 `;
 
 const Name = styled.div`
@@ -33,6 +43,12 @@ const Name = styled.div`
   font-size: 14px;
   color: rgb(220, 200, 255);
   text-shadow: 0 0 12px rgba(180, 80, 255, 0.65);
+
+  @media (max-width: 720px) {
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    line-height: 1.4;
+  }
 `;
 
 const Sub = styled.div`
@@ -41,6 +57,11 @@ const Sub = styled.div`
   letter-spacing: 0.32em;
   color: rgba(180, 80, 255, 0.85);
   text-transform: uppercase;
+
+  @media (max-width: 720px) {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+  }
 `;
 
 const StabilityRow = styled.div`
@@ -56,6 +77,13 @@ const StabilityRow = styled.div`
   text-transform: uppercase;
   color: rgba(220, 200, 255, 0.85);
   clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+
+  @media (max-width: 720px) {
+    margin-top: 10px;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    padding: 4px 10px;
+  }
 `;
 
 const StabValue = styled.span`

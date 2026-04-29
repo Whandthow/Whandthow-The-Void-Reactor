@@ -37,6 +37,11 @@ export const GlobalStyles = createGlobalStyle`
     text-rendering: optimizeLegibility;
   }
 
+  /* Touch / coarse-pointer devices: no fake cursor, restore native */
+  @media (hover: none) and (pointer: coarse) {
+    body { cursor: auto; }
+  }
+
   a {
     color: var(--color-acc-electric-purple);
     text-decoration: none;
@@ -55,4 +60,15 @@ export const GlobalStyles = createGlobalStyle`
     border-radius: 3px;
   }
 
+  /* Respect OS-level "reduce motion" preference: kill every animation /
+     transition / smooth scroll. Massive perf win on slow machines whose users
+     have already opted out of motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 `;

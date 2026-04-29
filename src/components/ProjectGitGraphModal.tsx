@@ -23,6 +23,11 @@ const Backdrop = styled.div`
   align-items: center;
   justify-content: center;
   padding: 60px 24px 24px;
+
+  @media (max-width: 720px) {
+    padding: 70px 8px 12px;
+    align-items: stretch;
+  }
 `;
 
 const Modal = styled.div`
@@ -35,6 +40,13 @@ const Modal = styled.div`
   display: flex;
   flex-direction: column;
   animation: ${fadeIn} 0.18s ease-out;
+
+  @media (max-width: 720px) {
+    width: 100%;
+    max-height: 100%;
+    flex: 1;
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  }
 `;
 
 const Header = styled.div`
@@ -43,6 +55,11 @@ const Header = styled.div`
   justify-content: space-between;
   padding: 14px 20px;
   border-bottom: 1px dashed rgba(180, 80, 255, 0.35);
+
+  @media (max-width: 720px) {
+    padding: 10px 12px;
+    gap: 8px;
+  }
 `;
 
 const Title = styled.h3`
@@ -52,6 +69,12 @@ const Title = styled.h3`
   letter-spacing: 0.28em;
   color: rgb(220, 200, 255);
   text-shadow: 0 0 8px rgba(180, 80, 255, 0.6);
+  word-break: break-word;
+
+  @media (max-width: 720px) {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+  }
 `;
 
 const Sub = styled.div`
@@ -72,11 +95,19 @@ const CloseBtn = styled.button`
   color: rgb(220, 200, 255);
   text-transform: uppercase;
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  flex-shrink: 0;
 
   &:hover, &:focus-visible {
     color: rgb(180, 80, 255);
     border-color: rgb(180, 80, 255);
     box-shadow: 0 0 12px rgba(180, 80, 255, 0.5);
+  }
+
+  @media (max-width: 720px) {
+    padding: 8px 10px;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    min-height: 36px; /* touch target */
   }
 `;
 
@@ -86,6 +117,12 @@ const Body = styled.div`
   gap: 0;
   flex: 1;
   min-height: 0;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    overflow-y: auto;
+  }
 `;
 
 const GraphWrap = styled.div`
@@ -96,6 +133,13 @@ const GraphWrap = styled.div`
     repeating-linear-gradient(90deg, rgba(180, 80, 255, 0.05) 0 1px, transparent 1px 22px);
   padding: 12px;
   overflow: auto;
+
+  @media (max-width: 720px) {
+    border-right: none;
+    border-bottom: 1px dashed rgba(180, 80, 255, 0.25);
+    padding: 10px;
+    max-height: 50vh;
+  }
 `;
 
 const Svg = styled.svg`
@@ -141,6 +185,11 @@ const Side = styled.div`
   letter-spacing: 0.06em;
   color: rgba(220, 200, 255, 0.92);
   overflow: auto;
+
+  @media (max-width: 720px) {
+    padding: 12px 14px;
+    font-size: 10.5px;
+  }
 `;
 
 const KV = styled.div`
@@ -148,6 +197,11 @@ const KV = styled.div`
   grid-template-columns: 100px 1fr;
   gap: 8px;
   font-size: 10.5px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 80px 1fr;
+    font-size: 10px;
+  }
   & dt {
     font-size: 9px;
     text-transform: uppercase;

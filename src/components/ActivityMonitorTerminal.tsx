@@ -14,6 +14,11 @@ const Body = styled(PanelBody)`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 `;
 
 const Section = styled.div`
@@ -31,6 +36,11 @@ const StatRow = styled.div`
   border: 1px solid rgba(180, 80, 255, 0.4);
   background: rgba(20, 0, 40, 0.5);
   clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+  gap: 12px;
+
+  @media (max-width: 720px) {
+    padding: 8px 10px;
+  }
 `;
 
 const Big = styled.div`
@@ -40,6 +50,10 @@ const Big = styled.div`
   color: rgb(180, 80, 255);
   text-shadow: 0 0 10px rgba(180, 80, 255, 0.8);
   line-height: 1;
+
+  @media (max-width: 720px) {
+    font-size: 24px;
+  }
 `;
 
 const SmallLabel = styled.div`
@@ -59,6 +73,12 @@ const SubBlock = styled.div`
   letter-spacing: 0.18em;
   color: rgba(220, 200, 255, 0.7);
   text-transform: uppercase;
+
+  @media (max-width: 720px) {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    gap: 2px;
+  }
 `;
 
 const WaveBox = styled.div`
@@ -72,6 +92,11 @@ const WaveBox = styled.div`
   overflow: hidden;
   min-height: 110px;
   cursor: crosshair;
+  touch-action: pan-y; /* let vertical page scroll continue while we read horizontal touch for scrub */
+
+  @media (max-width: 720px) {
+    min-height: 90px;
+  }
 `;
 
 const WaveLabel = styled.div`
@@ -102,11 +127,12 @@ const WaveStats = styled.div`
 const WaveSweep = styled.div`
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(180, 80, 255, 0.18), transparent);
+  background: linear-gradient(90deg, transparent, rgba(180, 80, 255, 0.14), transparent);
   width: 30%;
-  animation: ${sweep} 6s linear infinite;
+  /* Slowed from 6s to 9s. mix-blend-mode removed \u2014 it forced an off-screen
+     compositor layer that was repainted every frame. */
+  animation: ${sweep} 9s linear infinite;
   pointer-events: none;
-  mix-blend-mode: screen;
 `;
 
 const ScrubLine = styled.line`
@@ -153,6 +179,10 @@ const Osc = styled.div`
   cursor: pointer;
   transition: border-color 0.15s;
   &:hover { border-color: rgba(180, 80, 255, 0.6); }
+
+  @media (max-width: 720px) {
+    height: 64px;
+  }
 `;
 
 const TerminalShell = styled.div`
@@ -163,6 +193,10 @@ const TerminalShell = styled.div`
   background: rgba(0, 0, 3, 0.78);
   overflow: hidden;
   min-height: 110px;
+
+  @media (max-width: 720px) {
+    min-height: 150px;
+  }
 `;
 
 const FilterBar = styled.div`
@@ -325,25 +359,29 @@ export function ActivityMonitorTerminal(_p: Props) {
     return () => window.clearInterval(id);
   }, [pulseLog]);
 
-  // oscilloscope animation
+  // oscilloscope animation — throttled to ~30fps, 60-point path
   useEffect(() => {
     let raf = 0;
     let t = 0;
-    const update = () => {
-      t += 0.06;
+    let lastFrame = 0;
+    const FRAME_MS = 1000 / 30; // 30fps is more than enough for a wavy line
+    const STEPS = 60; // was 120 — halved, visually identical at this width
+    const update = (now: number) => {
+      raf = requestAnimationFrame(update);
+      if (now - lastFrame < FRAME_MS) return;
+      lastFrame = now;
+      t += 0.12; // double phase step to compensate for half framerate
       ampRef.current = ampRef.current * 0.94 + 8 * 0.06;
       const a = ampRef.current;
       const oW = 600;
       const oH = 80;
       const points: string[] = [];
-      const steps = 120;
-      for (let i = 0; i <= steps; i++) {
-        const x = (i / steps) * oW;
-        const y = oH / 2 + Math.sin(i * 0.35 + t) * a + Math.sin(i * 0.12 + t * 0.7) * (a * 0.4);
+      for (let i = 0; i <= STEPS; i++) {
+        const x = (i / STEPS) * oW;
+        const y = oH / 2 + Math.sin(i * 0.7 + t) * a + Math.sin(i * 0.24 + t * 0.7) * (a * 0.4);
         points.push(`${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`);
       }
       if (oscRef.current) oscRef.current.setAttribute('d', points.join(' '));
-      raf = requestAnimationFrame(update);
     };
     raf = requestAnimationFrame(update);
     return () => cancelAnimationFrame(raf);
@@ -399,13 +437,21 @@ export function ActivityMonitorTerminal(_p: Props) {
     [logs, filter]
   );
 
-  // hover scrub handlers
-  const onWaveMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // unified scrub handler — pointer events cover mouse + touch + pen
+  const scrubAt = (clientX: number) => {
     if (!wave.length || !waveBoxRef.current) return;
     const rect = waveBoxRef.current.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
+    const ratio = (clientX - rect.left) / rect.width;
     const idx = Math.max(0, Math.min(wave.length - 1, Math.round(ratio * (wave.length - 1))));
     setHoverIdx(idx);
+  };
+  const onWavePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    // for touch: only scrub when finger is actually pressed; for mouse: hover (no buttons) is fine too
+    if (e.pointerType !== 'mouse' && e.buttons === 0) return;
+    scrubAt(e.clientX);
+  };
+  const onWavePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    scrubAt(e.clientX);
   };
   const onWaveLeave = () => setHoverIdx(null);
 
@@ -448,10 +494,12 @@ export function ActivityMonitorTerminal(_p: Props) {
 
           <WaveBox
             ref={waveBoxRef}
-            onMouseMove={onWaveMove}
-            onMouseLeave={onWaveLeave}
+            onPointerMove={onWavePointerMove}
+            onPointerDown={onWavePointerDown}
+            onPointerLeave={onWaveLeave}
+            onPointerCancel={onWaveLeave}
             role="figure"
-            aria-label="contribution waveform — hover to inspect day"
+            aria-label="contribution waveform — hover or touch to inspect day"
           >
             <WaveLabel>CONTRIBUTION WAVEFORM</WaveLabel>
             <WaveStats>

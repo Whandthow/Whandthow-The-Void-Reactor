@@ -1,14 +1,11 @@
+import { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
-const drift = keyframes`
-  0%   { transform: translate3d(0,0,0) rotate(0deg); }
-  50%  { transform: translate3d(-2%, 1%, 0) rotate(0.3deg); }
-  100% { transform: translate3d(0,0,0) rotate(0deg); }
-`;
-
+/* Pulsating ring keyframes — the only animation kept in the background.
+   Using transform+opacity so it stays on the compositor thread. */
 const pulseRing = keyframes`
-  0%, 100% { transform: scale(1); opacity: 0.55; }
-  50%      { transform: scale(1.08); opacity: 0.85; }
+  0%, 100% { transform: scale(1);    opacity: 0.55; }
+  50%      { transform: scale(1.06); opacity: 0.85; }
 `;
 
 const Wrap = styled.div`
@@ -24,11 +21,12 @@ const Wrap = styled.div`
     rgb(0, 0, 3);
 `;
 
+/* Static grid — no animation, no blur filter. Mask fades it toward the edges.
+   Was previously animated with a 24s drift; that pushed the whole layer through
+   a CPU paint every frame. Static is visually almost identical and free. */
 const Distortion = styled.div`
   position: absolute;
   inset: -10%;
-  filter: blur(0.4px);
-  animation: ${drift} 24s ease-in-out infinite;
   background-image:
     repeating-linear-gradient(
       0deg,
@@ -77,40 +75,67 @@ const Vignette = styled.div`
   background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,3,0.85) 100%);
 `;
 
+const WarpHaloSvg = styled.svg`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+`;
+
+/** Detect coarse pointer / small screen so we can further trim decoration. */
+function useIsLowPower(): boolean {
+  const [low, setLow] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const isCoarse =
+      window.matchMedia?.('(hover: none) and (pointer: coarse)').matches ?? false;
+    const isNarrow = window.innerWidth < 720;
+    return isCoarse || isNarrow;
+  });
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 720px)');
+    const handler = () => setLow(mq.matches);
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+  return low;
+}
+
+/**
+ * Background shader.
+ *
+ * NOTE: Previously rendered an animated SVG <feTurbulence>+<feDisplacementMap>
+ * which forced the browser to recompute a full-screen procedural noise +
+ * displacement every single frame — by far the heaviest GPU/CPU cost in the
+ * whole page. That filter has been removed. The decorative “warp halo” is now
+ * just a static radial gradient, which looks essentially identical and is free.
+ */
 export function BackgroundShader() {
+  const lowPower = useIsLowPower();
+
   return (
     <Wrap aria-hidden>
       <Stars />
-      <Distortion />
-      <svg
-        width="100%"
-        height="100%"
-        style={{ position: 'absolute', inset: 0 }}
-        viewBox="0 0 1000 1000"
-        preserveAspectRatio="xMidYMid slice"
-      >
+      {!lowPower && <Distortion />}
+      {/* static radial halo — replaces the animated turbulence/displacement */}
+      <WarpHaloSvg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
         <defs>
           <radialGradient id="warpGrad" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="rgba(180, 80, 255, 0.30)" />
             <stop offset="60%" stopColor="rgba(80, 20, 160, 0.10)" />
             <stop offset="100%" stopColor="rgba(0,0,3,0)" />
           </radialGradient>
-          <filter id="warpTurb">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="5">
-              <animate attributeName="baseFrequency" dur="22s" values="0.010;0.018;0.010" repeatCount="indefinite" />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" scale="22" />
-          </filter>
         </defs>
-        <g filter="url(#warpTurb)">
-          <circle cx="500" cy="500" r="460" fill="url(#warpGrad)" />
-          <circle cx="500" cy="500" r="320" fill="none" stroke="rgba(180, 80, 255, 0.10)" strokeWidth="1" />
-          <circle cx="500" cy="500" r="220" fill="none" stroke="rgba(180, 80, 255, 0.14)" strokeWidth="1" />
-        </g>
-      </svg>
-      <Ring $size={320} $duration={6} $delay={0} />
-      <Ring $size={520} $duration={8} $delay={0.4} />
-      <Ring $size={780} $duration={10} $delay={0.8} />
+        <circle cx="500" cy="500" r="460" fill="url(#warpGrad)" />
+        {!lowPower && (
+          <>
+            <circle cx="500" cy="500" r="320" fill="none" stroke="rgba(180, 80, 255, 0.10)" strokeWidth="1" />
+            <circle cx="500" cy="500" r="220" fill="none" stroke="rgba(180, 80, 255, 0.14)" strokeWidth="1" />
+          </>
+        )}
+      </WarpHaloSvg>
+      {/* a single pulsating ring is enough — was three concentric rings before */}
+      <Ring $size={lowPower ? 520 : 620} $duration={9} $delay={0} />
       <Vignette />
     </Wrap>
   );

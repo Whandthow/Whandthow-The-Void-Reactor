@@ -8,7 +8,7 @@ import type { LangKey, Repository } from '../types';
 
 const flowFast = keyframes`
   from { stroke-dashoffset: 0; }
-  to   { stroke-dashoffset: -120; }
+  to   { stroke-dashoffset: -80; }
 `;
 const flowSlow = keyframes`
   from { stroke-dashoffset: 0; }
@@ -28,6 +28,10 @@ const Stage = styled.div`
     radial-gradient(circle at 50% 50%, rgba(180, 80, 255, 0.06), transparent 70%),
     repeating-linear-gradient(0deg, rgba(180, 80, 255, 0.05) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(90deg, rgba(180, 80, 255, 0.05) 0 1px, transparent 1px 22px);
+
+  @media (max-width: 720px) {
+    min-height: 260px;
+  }
 `;
 
 const Svg = styled.svg`
@@ -47,28 +51,29 @@ const Link = styled.path<{ $lang: LangKey; $dim: boolean }>`
   ${linkBase};
   stroke: ${(p) => theme.langColors[p.$lang]};
   opacity: ${(p) => (p.$dim ? 0.18 : 0.85)};
-  filter: ${(p) => (p.$dim ? 'none' : 'drop-shadow(0 0 6px rgba(180, 80, 255, 0.55))')};
+  /* drop-shadow on every animated edge was being repainted on every frame.
+     Replaced with a slightly thicker stroke + higher opacity — same vibe, free. */
   transition: opacity 0.2s, stroke-width 0.2s;
   ${(p) =>
     p.$lang === 'Java' &&
     css`
       stroke-width: 2.8;
       stroke-dasharray: 12 6;
-      animation: ${flowSlow} 3.4s linear infinite;
+      animation: ${flowSlow} 4.2s linear infinite;
     `}
   ${(p) =>
     p.$lang === 'Python' &&
     css`
-      stroke-width: 1.6;
+      stroke-width: 1.8;
       stroke-dasharray: 4 4;
-      animation: ${flowFast} 1.2s linear infinite;
+      animation: ${flowFast} 2.4s linear infinite;
     `}
   ${(p) =>
     p.$lang === 'C#' &&
     css`
       stroke-width: 2.2;
       stroke-dasharray: 1 6;
-      animation: ${flowMid} 2.2s linear infinite;
+      animation: ${flowMid} 3s linear infinite;
     `}
 `;
 
@@ -80,14 +85,15 @@ const NodeGroup = styled.g<{ $dim: boolean; $selected: boolean }>`
     fill: rgba(20, 0, 40, 0.85);
     stroke: rgb(180, 80, 255);
     stroke-width: ${(p) => (p.$selected ? 2.4 : 1.4)};
-    filter: drop-shadow(0 0 ${(p) => (p.$selected ? 12 : 6)}px rgba(180, 80, 255, ${(p) => (p.$selected ? 0.95 : 0.55)}));
+    /* glow only when actually selected/hovered — still paid for transitions */
+    filter: ${(p) => (p.$selected ? 'drop-shadow(0 0 8px rgba(180, 80, 255, 0.85))' : 'none')};
   }
   & .lang-mark {
     fill: rgb(220, 170, 255);
   }
   &:hover .diamond {
     stroke-width: 2.4;
-    filter: drop-shadow(0 0 14px rgba(180, 80, 255, 0.95));
+    filter: drop-shadow(0 0 8px rgba(180, 80, 255, 0.85));
   }
 `;
 
@@ -129,6 +135,19 @@ const Legend = styled.div`
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(220, 200, 255, 0.65);
+  flex-wrap: wrap;
+
+  @media (max-width: 720px) {
+    gap: 10px 12px;
+    font-size: 8.5px;
+    letter-spacing: 0.16em;
+
+    & > span:last-child {
+      margin-left: 0 !important; /* drop the auto-margin so it wraps cleanly */
+      flex-basis: 100%;
+      color: rgba(180, 80, 255, 0.7);
+    }
+  }
 `;
 
 const LegendDot = styled.span<{ $color: string }>`

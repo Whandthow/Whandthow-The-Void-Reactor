@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 const Layer = styled.div`
@@ -37,23 +37,25 @@ const Dot = styled.div`
   will-change: transform;
 `;
 
+/* The distortion halo previously used backdrop-filter (blur + hue-rotate +
+   saturate). That forces the browser to re-rasterize everything beneath the
+   100×100 disc on every pointermove — ~the single most expensive CSS feature.
+   Replaced with a pure radial gradient: visually the same warm halo, free. */
 const DistortionField = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  width: 100px;
-  height: 100px;
-  margin-left: -50px;
-  margin-top: -50px;
+  width: 90px;
+  height: 90px;
+  margin-left: -45px;
+  margin-top: -45px;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(180, 80, 255, 0.18) 0%,
-    rgba(180, 80, 255, 0.06) 45%,
+    rgba(180, 80, 255, 0.22) 0%,
+    rgba(180, 80, 255, 0.07) 45%,
     transparent 70%
   );
-  backdrop-filter: blur(1.2px) hue-rotate(8deg) saturate(1.4);
-  -webkit-backdrop-filter: blur(1.2px) hue-rotate(8deg) saturate(1.4);
   mix-blend-mode: screen;
   will-change: transform;
 `;
@@ -72,7 +74,7 @@ const TrailDot = styled.div`
   will-change: transform, opacity;
 `;
 
-const TRAIL = 8;
+const TRAIL = 5;
 
 /**
  * Custom cursor + spacetime distortion field.
@@ -86,7 +88,15 @@ const TRAIL = 8;
  * in a separate RAF loop and lerps toward the pointer for the smooth tail
  * effect.
  */
+/** Detect coarse pointers (touch screens) so we can skip the custom cursor entirely. */
+function isCoarsePointer(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+}
+
 export function CursorDistortion() {
+  const [enabled] = useState(() => !isCoarsePointer());
+
   const dotRef = useRef<HTMLDivElement>(null);
   const reticleRef = useRef<HTMLDivElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -100,6 +110,7 @@ export function CursorDistortion() {
   );
 
   useEffect(() => {
+    if (!enabled) return;
     // ---- main cursor: instant follow on every pointermove ----
     const onMove = (e: PointerEvent) => {
       const x = e.clientX;
@@ -121,21 +132,31 @@ export function CursorDistortion() {
 
     window.addEventListener('pointermove', onMove, { passive: true });
     return () => window.removeEventListener('pointermove', onMove);
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     // ---- trail: RAF loop, lerps behind the pointer ----
+    // Stops itself once the trail has caught up to the cursor and nothing has
+    // moved for a while — prevents burning ~5 DOM transform writes per frame
+    // forever while the user is reading.
     let raf = 0;
+    let idleFrames = 0;
+    const SLEEP_AFTER = 30; // ~0.5s at 60fps
     const loop = () => {
+      const tx = target.current.x;
+      const ty = target.current.y;
+
       // shift trail by one
       for (let i = trail.current.length - 1; i > 0; i--) {
         trail.current[i].x = trail.current[i - 1].x;
         trail.current[i].y = trail.current[i - 1].y;
       }
-      // head chases pointer with light lerp so the tail flows smoothly
       const head = trail.current[0];
-      head.x += (target.current.x - head.x) * 0.55;
-      head.y += (target.current.y - head.y) * 0.55;
+      const prevX = head.x;
+      const prevY = head.y;
+      head.x += (tx - head.x) * 0.55;
+      head.y += (ty - head.y) * 0.55;
 
       for (let i = 0; i < trail.current.length; i++) {
         const el = trailRefs.current[i];
@@ -145,11 +166,31 @@ export function CursorDistortion() {
         el.style.opacity = String(1 - i / TRAIL);
       }
 
-      raf = requestAnimationFrame(loop);
+      const moved =
+        Math.abs(prevX - head.x) + Math.abs(prevY - head.y) > 0.1 ||
+        Math.abs(head.x - tx) + Math.abs(head.y - ty) > 0.5;
+      idleFrames = moved ? 0 : idleFrames + 1;
+      if (idleFrames < SLEEP_AFTER) {
+        raf = requestAnimationFrame(loop);
+      } else {
+        raf = 0;
+      }
     };
+    const wake = () => {
+      if (raf === 0) {
+        idleFrames = 0;
+        raf = requestAnimationFrame(loop);
+      }
+    };
+    window.addEventListener('pointermove', wake, { passive: true });
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, []);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('pointermove', wake);
+    };
+  }, [enabled]);
+
+  if (!enabled) return null;
 
   return (
     <Layer aria-hidden>

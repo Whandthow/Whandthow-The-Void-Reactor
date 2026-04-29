@@ -47,6 +47,11 @@ const Column = styled.div`
   gap: 8px;
   align-items: stretch;
   margin-top: 4px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 34px 1fr;
+    gap: 10px;
+  }
 `;
 
 const Stack = styled.div<{ $enrichment: number }>`
@@ -60,6 +65,11 @@ const Stack = styled.div<{ $enrichment: number }>`
   gap: 2px;
   padding: 3px;
   overflow: hidden;
+
+  @media (max-width: 720px) {
+    height: 92px;
+    width: 34px;
+  }
 `;
 
 const Segment = styled.div<{ $i: number }>`
@@ -101,6 +111,10 @@ const Big = styled.div`
   font-size: 22px;
   color: rgb(180, 80, 255);
   text-shadow: 0 0 8px rgba(180, 80, 255, 0.8);
+
+  @media (max-width: 720px) {
+    font-size: 20px;
+  }
 `;
 
 interface Props {
@@ -120,6 +134,16 @@ export function JavaEnterpriseFissionRod({ enrichment }: Props) {
       $active={active}
       onMouseEnter={() => setActiveLang('Java')}
       onMouseLeave={() => setActiveLang(null)}
+      onClick={() => setActiveLang(active ? null : 'Java')}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setActiveLang(active ? null : 'Java');
+        }
+      }}
+      aria-pressed={active}
       aria-label="Java fuel rod"
     >
       <Tag>

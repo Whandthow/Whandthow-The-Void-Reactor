@@ -8,13 +8,15 @@ export const Panel = styled.section<{ $cut?: 'hex' | 'soft' | 'flag' }>`
   position: relative;
   display: flex;
   flex-direction: column;
+  /* Slightly more opaque than before so we no longer need a backdrop blur.
+     backdrop-filter forces the browser to re-rasterise everything underneath
+     the panel — with 4 panels on screen that was a constant tax. */
   background:
-    linear-gradient(180deg, rgba(20, 0, 40, 0.55), rgba(8, 0, 20, 0.78));
+    linear-gradient(180deg, rgba(20, 0, 40, 0.78), rgba(8, 0, 20, 0.92));
   border: 1px solid rgba(100, 30, 200, 0.6);
   box-shadow:
     0 0 0 1px rgba(180, 80, 255, 0.05) inset,
     0 0 24px rgba(180, 80, 255, 0.08);
-  backdrop-filter: blur(2px);
   overflow: hidden;
   ${(p) =>
     p.$cut === 'hex'
@@ -39,6 +41,12 @@ export const Panel = styled.section<{ $cut?: 'hex' | 'soft' | 'flag' }>`
     bottom: 6px; right: 6px;
     border-left: none; border-top: none;
   }
+
+  @media (max-width: 720px) {
+    &::before, &::after { width: 10px; height: 10px; }
+    &::before { top: 4px; left: 4px; }
+    &::after { bottom: 4px; right: 4px; }
+  }
 `;
 
 export const PanelHeader = styled.header`
@@ -53,6 +61,14 @@ export const PanelHeader = styled.header`
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(180, 80, 255, 0.9);
+
+  @media (max-width: 720px) {
+    padding: 8px 10px 6px;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+  }
 `;
 
 export const PanelTitle = styled.h2`
@@ -62,6 +78,11 @@ export const PanelTitle = styled.h2`
   letter-spacing: 0.32em;
   color: rgb(220, 200, 255);
   text-shadow: 0 0 8px rgba(180, 80, 255, 0.5);
+
+  @media (max-width: 720px) {
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+  }
 `;
 
 export const PanelTag = styled.div`
@@ -70,6 +91,13 @@ export const PanelTag = styled.div`
   color: rgba(180, 80, 255, 0.65);
   border: 1px solid rgba(180, 80, 255, 0.3);
   padding: 2px 7px;
+  white-space: nowrap;
+
+  @media (max-width: 720px) {
+    font-size: 8.5px;
+    padding: 1px 5px;
+    letter-spacing: 0.16em;
+  }
 `;
 
 export const PanelBody = styled.div`
@@ -80,4 +108,9 @@ export const PanelBody = styled.div`
   flex-direction: column;
   gap: 10px;
   min-height: 0;
+
+  @media (max-width: 720px) {
+    padding: 10px 10px 12px;
+    gap: 8px;
+  }
 `;

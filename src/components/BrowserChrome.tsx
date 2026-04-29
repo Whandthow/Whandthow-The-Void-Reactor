@@ -11,13 +11,21 @@ const Bar = styled.div`
   align-items: center;
   gap: 12px;
   padding: 0 14px;
-  background: linear-gradient(180deg, rgba(20, 0, 40, 0.95), rgba(8, 0, 20, 0.95));
+  /* Was rgba(0.95) + backdrop-filter blur(8px). Since the background is
+     already nearly opaque, the blur was wasted GPU work \u2014 dropped. */
+  background: linear-gradient(180deg, rgb(20, 0, 40), rgb(8, 0, 20));
   border-bottom: 1px solid rgba(180, 80, 255, 0.35);
-  backdrop-filter: blur(8px);
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.08em;
   color: rgba(220, 200, 255, 0.85);
+
+  @media (max-width: 720px) {
+    height: 28px;
+    gap: 8px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
 `;
 
 const Dots = styled.div`
@@ -47,6 +55,14 @@ const Url = styled.div`
   text-shadow: 0 0 6px rgba(180, 80, 255, 0.5);
   max-width: 580px;
   margin: 0 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (max-width: 720px) {
+    padding: 3px 8px;
+    letter-spacing: 0.12em;
+  }
 `;
 
 const Side = styled.div`
@@ -56,6 +72,10 @@ const Side = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: rgba(180, 80, 255, 0.7);
+
+  @media (max-width: 720px) {
+    display: none; /* save space, info already shown in HeaderBar */
+  }
 `;
 
 export function BrowserChrome() {
@@ -66,7 +86,7 @@ export function BrowserChrome() {
         <span />
         <span />
       </Dots>
-      <Url>Whandthow.com // Fission Synthesizer</Url>
+      <Url title="Whandthow.com // Fission Synthesizer">whandthow.com // fission synthesizer</Url>
       <Side>
         <span>SECURE</span>
         <span>::</span>

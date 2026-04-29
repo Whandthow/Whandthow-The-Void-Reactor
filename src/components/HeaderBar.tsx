@@ -28,6 +28,15 @@ const Bar = styled.header`
     100% calc(100% - 6px), calc(100% - 18px) 100%,
     18px 100%, 0 calc(100% - 6px)
   );
+
+  @media (max-width: 720px) {
+    top: 28px;
+    height: 32px;
+    gap: 10px;
+    padding: 0 12px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+  }
 `;
 
 const Brand = styled.div`
@@ -36,13 +45,22 @@ const Brand = styled.div`
   color: rgb(180, 80, 255);
   text-shadow: 0 0 8px rgba(180, 80, 255, 0.7);
   letter-spacing: 0.32em;
+
+  @media (max-width: 720px) {
+    letter-spacing: 0.22em;
+    font-size: 11px;
+  }
 `;
 
 const Sep = styled.span`
   color: rgba(180, 80, 255, 0.4);
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
-const Pill = styled.div<{ $live?: boolean }>`
+const Pill = styled.div<{ $live?: boolean; $hideOnMobile?: boolean }>`
   border: 1px solid rgba(180, 80, 255, 0.4);
   padding: 3px 10px;
   border-radius: 1px;
@@ -60,6 +78,14 @@ const Pill = styled.div<{ $live?: boolean }>`
     box-shadow: 0 0 8px rgba(180, 80, 255, 0.9);
     animation: ${blink} 1.4s ease-in-out infinite;
   }
+
+  @media (max-width: 720px) {
+    padding: 2px 6px;
+    gap: 5px;
+    font-size: 9px;
+    ${(p) => p.$hideOnMobile && 'display: none;'}
+    &::before { width: 5px; height: 5px; }
+  }
 `;
 
 const Spacer = styled.div`
@@ -69,6 +95,10 @@ const Spacer = styled.div`
 const Time = styled.div`
   font-variant-numeric: tabular-nums;
   color: rgba(180, 80, 255, 0.85);
+
+  @media (max-width: 720px) {
+    font-size: 10px;
+  }
 `;
 
 import { useEffect, useState } from 'react';
@@ -84,11 +114,11 @@ export function HeaderBar() {
     <Bar>
       <Brand>WHANDTHOW</Brand>
       <Sep>//</Sep>
-      <Pill>OPERATOR ID: 001</Pill>
+      <Pill $hideOnMobile>OPERATOR ID: 001</Pill>
       <Sep>//</Sep>
-      <Pill $live>SYNTHESIS STATUS: STABLE</Pill>
+      <Pill $live>STABLE</Pill>
       <Sep>//</Sep>
-      <Pill>POLIGLOT CORE</Pill>
+      <Pill $hideOnMobile>POLIGLOT CORE</Pill>
       <Spacer />
       <Time>UTC {time}</Time>
     </Bar>

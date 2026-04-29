@@ -21,25 +21,13 @@ const Shell = styled.div`
   padding: 84px 24px 28px; /* below browser chrome (32) + header (36) + gap */
   display: flex;
   flex-direction: column;
-`;
 
-const Grid = styled.main`
-  position: relative;
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr minmax(360px, 1fr) 1fr;
-  grid-template-rows: minmax(340px, 1fr) minmax(340px, 1fr);
-  gap: 18px;
-  width: 100%;
-  max-width: 1480px;
-  margin: 0 auto;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto auto;
+  @media (max-width: 1180px) {
+    padding: 80px 16px 22px;
   }
   @media (max-width: 720px) {
-    grid-template-columns: 1fr;
+    /* mobile chrome shrinks to 28+32 = 60, plus 12px gap */
+    padding: 72px 10px 18px;
   }
 `;
 
@@ -54,26 +42,6 @@ const TopRight = styled(Cell).attrs({ $area: 'tr' })``;
 const BottomLeft = styled(Cell).attrs({ $area: 'bl' })``;
 const BottomRight = styled(Cell).attrs({ $area: 'br' })``;
 
-const Center = styled.div`
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 2;
-`;
-
-const ConnectorSvg = styled.svg`
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.55;
-`;
-
 const Footer = styled.footer`
   margin-top: 20px;
   display: flex;
@@ -85,6 +53,16 @@ const Footer = styled.footer`
   color: rgba(180, 80, 255, 0.55);
   padding: 10px 4px 0;
   border-top: 1px dashed rgba(180, 80, 255, 0.2);
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+    letter-spacing: 0.2em;
+    font-size: 8.5px;
+    margin-top: 14px;
+    padding: 8px 4px 0;
+  }
 `;
 
 const GridLayout = styled.main`
@@ -110,6 +88,7 @@ const GridLayout = styled.main`
     min-height: 0;
   }
 
+  /* Tablet: 2 columns, center spans full width */
   @media (max-width: 1180px) {
     grid-template-areas:
       'tl tr'
@@ -118,17 +97,29 @@ const GridLayout = styled.main`
     grid-template-columns: 1fr 1fr;
     grid-template-rows: minmax(320px, auto) minmax(320px, auto) minmax(320px, auto);
     min-height: 0;
+    gap: 14px;
 
-    & > .center { min-height: 360px; }
+    & > .center { min-height: 320px; }
   }
+
+  /* Phone: single column, hero core first, then panels in narrative order:
+     1. core (identity)
+     2. tl   (skills / fuel rods)
+     3. tr   (projects graph)
+     4. bl   (activity monitor)
+     5. br   (contact channels) */
   @media (max-width: 720px) {
     grid-template-areas:
-      'tl'
       'center'
+      'tl'
       'tr'
       'bl'
       'br';
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 12px;
+
+    & > .center { min-height: 320px; }
   }
 `;
 
