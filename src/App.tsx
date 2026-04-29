@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import styled from 'styled-components';
 import { BackgroundShader } from './components/BackgroundShader';
 import { BrowserChrome } from './components/BrowserChrome';
@@ -9,9 +9,14 @@ import { ProjectReactionGraph } from './components/ProjectReactionGraph';
 import { ActivityMonitorTerminal } from './components/ActivityMonitorTerminal';
 import { ContactEmergencyPanel } from './components/ContactEmergencyPanel';
 import { CursorDistortion } from './components/CursorDistortion';
-import { ProjectGitGraphModal } from './components/ProjectGitGraphModal';
 import { ResonanceProvider, useResonance } from './context/ResonanceContext';
 import type { Repository } from './types';
+
+/* Code-split: the git-graph modal is only needed when the user opens a repo,
+   so we don't ship it in the initial bundle. */
+const ProjectGitGraphModal = lazy(() =>
+  import('./components/ProjectGitGraphModal').then((m) => ({ default: m.ProjectGitGraphModal })),
+);
 
 const Shell = styled.div`
   position: relative;
@@ -157,7 +162,11 @@ function AppInner() {
       </Shell>
 
       <CursorDistortion />
-      {openRepo && <ProjectGitGraphModal repo={openRepo} onClose={onClose} />}
+      {openRepo && (
+        <Suspense fallback={null}>
+          <ProjectGitGraphModal repo={openRepo} onClose={onClose} />
+        </Suspense>
+      )}
     </>
   );
 }

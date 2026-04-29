@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 const blink = keyframes`
@@ -100,8 +101,6 @@ const Time = styled.div`
     font-size: 10px;
   }
 `;
-
-import { useEffect, useState } from 'react';
 
 export function HeaderBar() {
   const [time, setTime] = useState(() => new Date().toISOString().slice(11, 19));

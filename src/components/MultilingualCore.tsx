@@ -92,7 +92,9 @@ const StabValue = styled.span`
   text-shadow: 0 0 8px rgba(180, 80, 255, 0.7);
 `;
 
-export function MultilingualCore() {
+/* Isolated so its 1s tick doesn't re-render the parent (and through it the
+   heavy IcosphereCore wireframe). Only this small numeric span re-renders. */
+function StabilityTicker() {
   const [stability, setStability] = useState(98.7);
   const tickRef = useRef(0);
 
@@ -102,10 +104,14 @@ export function MultilingualCore() {
       const wave = Math.sin(tickRef.current / 6) * 0.6 + (Math.random() - 0.5) * 0.4;
       const next = 98.5 + wave;
       setStability(Number(next.toFixed(2)));
-    }, 420);
+    }, 1000); // was 420ms — 2.4× fewer renders, eye barely notices
     return () => clearInterval(id);
   }, []);
 
+  return <StabValue>{stability.toFixed(2)}%</StabValue>;
+}
+
+export function MultilingualCore() {
   return (
     <Wrap aria-label="multilingual core">
       <Stage>
@@ -116,7 +122,7 @@ export function MultilingualCore() {
         <Name>ALEX WHANDTHOW // BACKEND POLIGLOT ENGINEER</Name>
         <Sub>Orchestrating high-stability multilingual cores</Sub>
         <StabilityRow>
-          CORE_STABILITY:&nbsp;<StabValue>{stability.toFixed(2)}%</StabValue>
+          CORE_STABILITY:&nbsp;<StabilityTicker />
         </StabilityRow>
       </TextBlock>
     </Wrap>

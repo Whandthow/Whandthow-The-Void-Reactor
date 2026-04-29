@@ -47,33 +47,35 @@ const linkBase = css`
   stroke-linecap: round;
 `;
 
-const Link = styled.path<{ $lang: LangKey; $dim: boolean }>`
+/* Animation is opt-in: by default the path is static. Only when the user is
+   hovering the rod for this language does the dash-flow animate. This solves
+   Lighthouse's "Avoid non-composited animations" warning in the idle state
+   (was 8 always-animating paths — a per-frame paint cost). */
+const Link = styled.path<{ $lang: LangKey; $dim: boolean; $flow: boolean }>`
   ${linkBase};
   stroke: ${(p) => theme.langColors[p.$lang]};
   opacity: ${(p) => (p.$dim ? 0.18 : 0.85)};
-  /* drop-shadow on every animated edge was being repainted on every frame.
-     Replaced with a slightly thicker stroke + higher opacity — same vibe, free. */
   transition: opacity 0.2s, stroke-width 0.2s;
   ${(p) =>
     p.$lang === 'Java' &&
     css`
       stroke-width: 2.8;
       stroke-dasharray: 12 6;
-      animation: ${flowSlow} 4.2s linear infinite;
+      ${p.$flow && css`animation: ${flowSlow} 4.2s linear infinite;`}
     `}
   ${(p) =>
     p.$lang === 'Python' &&
     css`
       stroke-width: 1.8;
       stroke-dasharray: 4 4;
-      animation: ${flowFast} 2.4s linear infinite;
+      ${p.$flow && css`animation: ${flowFast} 2.4s linear infinite;`}
     `}
   ${(p) =>
     p.$lang === 'C#' &&
     css`
       stroke-width: 2.2;
       stroke-dasharray: 1 6;
-      animation: ${flowMid} 3s linear infinite;
+      ${p.$flow && css`animation: ${flowMid} 3s linear infinite;`}
     `}
 `;
 
@@ -258,7 +260,15 @@ export function ProjectReactionGraph({ onSelect }: Props) {
               const mx = (e.from.x + e.to.x) / 2;
               const my = (e.from.y + e.to.y) / 2 - 24;
               const d = `M ${e.from.x} ${e.from.y} Q ${mx} ${my} ${e.to.x} ${e.to.y}`;
-              return <Link key={i} d={d} $lang={e.lang} $dim={isDim(e.lang)} />;
+              return (
+                <Link
+                  key={i}
+                  d={d}
+                  $lang={e.lang}
+                  $dim={isDim(e.lang)}
+                  $flow={activeLang === e.lang}
+                />
+              );
             })}
 
             {/* connector chips on edges */}

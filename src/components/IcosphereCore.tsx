@@ -266,6 +266,10 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
   const lastInteract = useRef(0);
   const drag = useRef({ active: false, x: 0, y: 0, moved: 0 });
   const pointerXY = useRef({ x: -1, y: -1, inside: false });
+  /* Separate hover gate: when > -1 the auto-rotate branch is skipped this
+     frame. Decoupled from `lastInteract` so the moment the cursor leaves a
+     vertex, rotation resumes immediately (no 1.4s cooldown). */
+  const hoverRef = useRef(-1);
 
   const [size, setSize] = useState(360);
   const [hover, setHover] = useState<{ idx: number; x: number; y: number } | null>(null);
@@ -290,11 +294,13 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
     let raf = 0;
     let last = performance.now();
     let lastFrame = 0;
+    let paused = document.hidden;
     /* Throttle to ~40fps. Visually indistinguishable from 60 for a slow
        drag-to-rotate icosphere, but cuts work by ~33%. */
     const FRAME_MS = 1000 / 40;
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
+      if (paused) return;
       if (now - lastFrame < FRAME_MS) return;
       lastFrame = now;
       const dt = Math.min(0.05, (now - last) / 1000);
@@ -304,8 +310,9 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
       rot.current.x += (target.current.x - rot.current.x) * 0.12;
       rot.current.y += (target.current.y - rot.current.y) * 0.12;
 
-      // resume auto-rotate after ~1.4s of no interaction
-      if (now - lastInteract.current > 1400) {
+      // resume auto-rotate after a short cooldown post drag/click. Hovering
+      // a vertex pauses via hoverRef instead, so un-hover is instantaneous.
+      if (hoverRef.current < 0 && now - lastInteract.current > 600) {
         target.current.y += dt * 0.18;
       }
 
@@ -381,9 +388,15 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
           }
         }
         if (bestIdx >= 0) {
+          // Pause auto-rotation via the hover gate (NOT lastInteract). target.y
+          // stays frozen, rot lerps smoothly to a halt, and as soon as the
+          // cursor leaves the vertex auto-rotate fires the very next frame.
+          hoverRef.current = bestIdx;
           const p = projected[bestIdx];
           setHover((prev) =>
-            prev && prev.idx === bestIdx ? prev : { idx: bestIdx, x: p.x, y: p.y }
+            prev && prev.idx === bestIdx
+              ? prev
+              : { idx: bestIdx, x: p.x, y: p.y }
           );
           // mark active dot
           for (let i = 0; i < 12; i++) {
@@ -391,18 +404,28 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
             if (!d) continue;
             d.classList.toggle('hot', i === bestIdx);
           }
-        } else if (hover) {
+        } else if (hoverRef.current >= 0) {
+          hoverRef.current = -1;
           setHover(null);
           for (let i = 0; i < 12; i++) dotRefs.current[i]?.classList.remove('hot');
         }
-      } else if (hover) {
+      } else if (hoverRef.current >= 0) {
+        hoverRef.current = -1;
         setHover(null);
         for (let i = 0; i < 12; i++) dotRefs.current[i]?.classList.remove('hot');
       }
 
     };
+    const onVisibility = () => {
+      paused = document.hidden;
+      if (!paused) last = performance.now();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
     // hover state intentionally omitted from deps (RAF reads through closure)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, size]);
@@ -441,8 +464,10 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
     const y = e.clientY - rect.top;
     pointerXY.current.x = x;
     pointerXY.current.y = y;
-    pointerXY.current.inside =
+    const stillInside =
       x >= 0 && y >= 0 && x <= rect.width && y <= rect.height;
+    pointerXY.current.inside = stillInside;
+    if (!stillInside) clearHover();
     // click (no drag) → emit a ping
     if (!wasDrag) {
       const id = Date.now() + Math.random();
@@ -450,12 +475,22 @@ export function IcosphereCore({ subdivisions = 1 }: Props) {
       window.setTimeout(() => setPings((arr) => arr.filter((x) => x !== id)), 820);
     }
   };
+  /* Clear hover state synchronously so the tooltip cannot survive past the
+     cursor leaving — previously this was deferred to the throttled RAF tick,
+     which left a ghost badge on screen if the loop happened to be paused. */
+  const clearHover = () => {
+    hoverRef.current = -1;
+    setHover(null);
+    for (let i = 0; i < 12; i++) dotRefs.current[i]?.classList.remove('hot');
+  };
   const onPointerLeave = () => {
     pointerXY.current.inside = false;
+    clearHover();
   };
   const onPointerCancel = () => {
     drag.current.active = false;
     pointerXY.current.inside = false;
+    clearHover();
   };
 
   // outer hex frame geometry (from -50..50 viewBox)

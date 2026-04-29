@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import type { LangKey, Repository } from '../types';
 
 interface ResonanceState {
@@ -6,22 +6,21 @@ interface ResonanceState {
   setActiveLang: (l: LangKey | null) => void;
   selectedRepo: Repository | null;
   setSelectedRepo: (r: Repository | null) => void;
-  logPulseTick: number;        // increments every time a new log is generated
-  pulseLog: () => void;
 }
 
 const ResonanceContext = createContext<ResonanceState | null>(null);
 
+/* Note: `logPulseTick` used to live here but it was only ever read/written by
+   ActivityMonitorTerminal. Keeping it in the global context made *every*
+   subscriber (3 fuel rods, ProjectReactionGraph, App) re-render every 2.6s
+   for no reason. It's now local state inside ActivityMonitorTerminal. */
 export function ResonanceProvider({ children }: { children: React.ReactNode }) {
   const [activeLang, setActiveLang] = useState<LangKey | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
-  const [logPulseTick, setLogPulseTick] = useState(0);
-
-  const pulseLog = useCallback(() => setLogPulseTick((t) => t + 1), []);
 
   const value = useMemo<ResonanceState>(
-    () => ({ activeLang, setActiveLang, selectedRepo, setSelectedRepo, logPulseTick, pulseLog }),
-    [activeLang, selectedRepo, logPulseTick, pulseLog]
+    () => ({ activeLang, setActiveLang, selectedRepo, setSelectedRepo }),
+    [activeLang, selectedRepo]
   );
 
   return <ResonanceContext.Provider value={value}>{children}</ResonanceContext.Provider>;

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Panel, PanelBody, PanelHeader, PanelTag, PanelTitle } from './Panel';
 import { fetchContributionWaveform, fetchUserStats } from '../data/mockApi';
-import { useResonance } from '../context/ResonanceContext';
 import type { DailyCommit, UserStats } from '../types';
 
 const sweep = keyframes`
@@ -331,7 +330,6 @@ export function ActivityMonitorTerminal(_p: Props) {
   const oscRef = useRef<SVGPathElement | null>(null);
   const ampRef = useRef(8);
   const waveBoxRef = useRef<HTMLDivElement>(null);
-  const { logPulseTick, pulseLog } = useResonance();
 
   useEffect(() => {
     fetchUserStats().then(setStats);
@@ -354,20 +352,26 @@ export function ActivityMonitorTerminal(_p: Props) {
         const aged = prev.map((l) => ({ ...l, age: l.age + 1 }));
         return [entry, ...aged].slice(0, 7);
       });
-      pulseLog();
-    }, 1700);
+      // bump oscilloscope amplitude inline; previously this went through a
+      // global context tick that re-rendered every other component.
+      ampRef.current = 26;
+    }, 2600); // was 1700ms — slower cadence, fewer React renders per minute
     return () => window.clearInterval(id);
-  }, [pulseLog]);
+  }, []);
 
   // oscilloscope animation — throttled to ~30fps, 60-point path
   useEffect(() => {
     let raf = 0;
     let t = 0;
     let lastFrame = 0;
+    let paused = document.hidden;
+    const onVis = () => { paused = document.hidden; };
+    document.addEventListener('visibilitychange', onVis);
     const FRAME_MS = 1000 / 30; // 30fps is more than enough for a wavy line
     const STEPS = 60; // was 120 — halved, visually identical at this width
     const update = (now: number) => {
       raf = requestAnimationFrame(update);
+      if (paused) return;
       if (now - lastFrame < FRAME_MS) return;
       lastFrame = now;
       t += 0.12; // double phase step to compensate for half framerate
@@ -384,13 +388,11 @@ export function ActivityMonitorTerminal(_p: Props) {
       if (oscRef.current) oscRef.current.setAttribute('d', points.join(' '));
     };
     raf = requestAnimationFrame(update);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, []);
-
-  // bump amplitude on every new log
-  useEffect(() => {
-    ampRef.current = 26;
-  }, [logPulseTick]);
 
   // build waveform path + peaks + per-day x/y/v
   const wavePath = useMemo(() => {
